@@ -589,7 +589,8 @@ export const Topics: React.FC<Props> = ({ assistant: _assistant, activeTopic, se
               <Search size={16} />
               <span>搜索聊天</span>
             </GPTButton>
-            <JarvisToggle />
+            {/* Jarvis 模式入口 — 等系统全链路跑通后启用 */}
+            {/* <JarvisToggle /> */}
           </HeaderRow>
         }
         disabled={isManageMode}>

@@ -44,14 +44,8 @@ const ProviderList: FC = () => {
     loadAllLogos()
   }, [providers])
 
-  // AIIRC: 只显示已启用的 + 顶级的 + 自定义的
-  const topProviders = ['openai', 'anthropic', 'gemini', 'deepseek']
-  const filteredProviders = providers.filter((provider) => {
-    if (!provider.enabled && isSystemProvider(provider) && !topProviders.includes(provider.id)) {
-      return false
-    }
-    return true
-  })
+  // AIIRC: Show all providers except deprecated 'aiirc'
+  const filteredProviders = providers.filter((provider) => provider.id !== 'aiirc')
 
   const onAddProvider = async () => {
     const { name: providerName, type, logo } = await AddProviderPopup.show()

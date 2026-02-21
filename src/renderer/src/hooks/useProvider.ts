@@ -29,13 +29,14 @@ function normalizeProvider<T extends Provider>(provider: T): T {
   }
 }
 
-const selectProviders = (state: RootState) => state.llm.providers
+// AIIRC: Hide deprecated providers — requests transparently route through AI Router
+const selectProviders = (state: RootState) =>
+  state.llm.providers.filter((p) => p.id !== 'aiirc' && p.id !== 'aiirc-hub')
 
 const selectEnabledProviders = createSelector(selectProviders, (providers) =>
   providers
     .map(normalizeProvider)
     .filter((p) => p.enabled)
-    .concat(CHERRYAI_PROVIDER)
 )
 
 const selectSystemProviders = createSelector(selectProviders, (providers) =>
@@ -49,7 +50,7 @@ const selectUserProviders = createSelector(selectProviders, (providers) =>
 const selectAllProviders = createSelector(selectProviders, (providers) => providers.map(normalizeProvider))
 
 const selectAllProvidersWithCherryAI = createSelector(selectProviders, (providers) =>
-  [...providers, CHERRYAI_PROVIDER].map(normalizeProvider)
+  providers.map(normalizeProvider)
 )
 
 export function useProviders() {

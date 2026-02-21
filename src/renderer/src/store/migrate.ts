@@ -3244,6 +3244,143 @@ const migrateConfig = {
       logger.error('migrate 198 error', error as Error)
       return state
     }
+  },
+  '199': (state: RootState) => {
+    try {
+      // Remove AIIRC provider and enable core providers
+      state.llm.providers = state.llm.providers.filter((p) => p.id !== 'aiirc')
+      const coreProviders = ['openai', 'deepseek', 'gemini']
+      state.llm.providers.forEach((p) => {
+        if (coreProviders.includes(p.id)) {
+          p.enabled = true
+        }
+      })
+      return state
+    } catch (error) {
+      logger.error('migrate 199 error', error as Error)
+      return state
+    }
+  },
+  '200': (state: RootState) => {
+    try {
+      // Remove AIIRC provider and enable core providers
+      state.llm.providers = state.llm.providers.filter((p) => p.id !== 'aiirc')
+      const coreProviders = ['openai', 'deepseek', 'gemini']
+      state.llm.providers.forEach((p) => {
+        if (coreProviders.includes(p.id)) {
+          p.enabled = true
+        }
+      })
+      return state
+    } catch (error) {
+      logger.error('migrate 200 error', error as Error)
+      return state
+    }
+  },
+  '201': (state: RootState) => {
+    try {
+      // Replace OpenAI models with actually available ones
+      const openaiProvider = state.llm.providers.find((p) => p.id === 'openai')
+      if (openaiProvider) {
+        openaiProvider.models = [
+          { id: 'gpt-4.1', name: 'GPT 4.1', provider: 'openai', group: 'GPT 4.1' },
+          { id: 'gpt-4o', name: 'GPT 4o', provider: 'openai', group: 'GPT 4o' },
+          { id: 'gpt-4o-mini', name: 'GPT 4o Mini', provider: 'openai', group: 'GPT 4o' },
+          { id: 'gpt-4-turbo', name: 'GPT 4 Turbo', provider: 'openai', group: 'GPT 4' }
+        ] as any
+      }
+      return state
+    } catch (error) {
+      logger.error('migrate 201 error', error as Error)
+      return state
+    }
+  },
+  '202': (state: RootState) => {
+    try {
+      // Fix OpenAI models — previous migration used wrong capabilities format
+      const openaiProvider = state.llm.providers.find((p) => p.id === 'openai')
+      if (openaiProvider) {
+        openaiProvider.models = [
+          { id: 'gpt-4.1', name: 'GPT 4.1', provider: 'openai', group: 'GPT 4.1' },
+          { id: 'gpt-4o', name: 'GPT 4o', provider: 'openai', group: 'GPT 4o' },
+          { id: 'gpt-4o-mini', name: 'GPT 4o Mini', provider: 'openai', group: 'GPT 4o' },
+          { id: 'gpt-4-turbo', name: 'GPT 4 Turbo', provider: 'openai', group: 'GPT 4' }
+        ] as any
+      }
+      return state
+    } catch (error) {
+      logger.error('migrate 202 error', error as Error)
+      return state
+    }
+  },
+  '203': (state: RootState) => {
+    try {
+      // Add AIIRC Hub provider — routes through AI Router for orchestration
+      const aiircHub = {
+        id: 'aiirc-hub',
+        name: 'AIIRC Hub',
+        type: 'openai',
+        apiKey: 'dev-service-key',
+        apiHost: 'http://localhost:3022',
+        models: [
+          { id: 'gpt-4.1', name: 'GPT 4.1 (主AI)', provider: 'aiirc-hub', group: 'OpenAI' },
+          { id: 'gpt-4o', name: 'GPT 4o', provider: 'aiirc-hub', group: 'OpenAI' },
+          { id: 'gpt-4o-mini', name: 'GPT 4o Mini', provider: 'aiirc-hub', group: 'OpenAI' },
+          { id: 'deepseek-chat', name: 'DeepSeek V3', provider: 'aiirc-hub', group: 'DeepSeek' },
+          { id: 'deepseek-reasoner', name: 'DeepSeek R1', provider: 'aiirc-hub', group: 'DeepSeek' },
+          { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'aiirc-hub', group: 'Google' },
+          { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'aiirc-hub', group: 'Google' },
+          { id: 'claude-sonnet-4', name: 'Claude Sonnet 4', provider: 'aiirc-hub', group: 'Anthropic' },
+          { id: 'claude-opus-4', name: 'Claude Opus 4', provider: 'aiirc-hub', group: 'Anthropic' },
+          { id: 'minimax-m2.5', name: 'MiniMax M2.5', provider: 'aiirc-hub', group: 'MiniMax' }
+        ],
+        isSystem: false,
+        enabled: true
+      }
+
+      // Remove old aiirc provider if exists, add new hub
+      state.llm.providers = state.llm.providers.filter((p) => p.id !== 'aiirc' && p.id !== 'aiirc-hub')
+      state.llm.providers.unshift(aiircHub as any)
+      return state
+    } catch (error) {
+      logger.error('migrate 203 error', error as Error)
+      return state
+    }
+  },
+  '204': (state: RootState) => {
+    try {
+      // Remove AIIRC Hub — requests now transparently route through AI Router
+      state.llm.providers = state.llm.providers.filter((p) => p.id !== 'aiirc-hub' && p.id !== 'aiirc')
+      return state
+    } catch (error) {
+      logger.error('migrate 204 error', error as Error)
+      return state
+    }
+  },
+  '205': (state: RootState) => {
+    try {
+      // AIIRC: Route ALL providers through AI Router
+      // Save original apiHost and replace with AI Router URL
+      const AI_ROUTER_URL = 'http://localhost:3022/v1'
+      const AI_ROUTER_KEY = 'dev-service-key'
+      const targetProviders = ['openai', 'deepseek', 'gemini', 'anthropic', 'minimax']
+
+      state.llm.providers.forEach((p) => {
+        if (targetProviders.includes(p.id)) {
+          // Save original for potential restoration
+          ; (p as any)._originalApiHost = p.apiHost
+            ; (p as any)._originalApiKey = p.apiKey
+          p.apiHost = AI_ROUTER_URL
+          p.apiKey = AI_ROUTER_KEY
+          // Force OpenAI-compatible type so SDK uses /chat/completions endpoint
+          p.type = 'openai' as any
+        }
+      })
+      return state
+    } catch (error) {
+      logger.error('migrate 205 error', error as Error)
+      return state
+    }
   }
 }
 

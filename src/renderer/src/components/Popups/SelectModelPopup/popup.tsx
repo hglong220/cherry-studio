@@ -54,7 +54,8 @@ export type FilterType = Exclude<ModelType, 'text'> | 'free'
 
 const PopupContainer: React.FC<Props> = ({ model, filter: baseFilter, showTagFilter = true, resolve }) => {
   const { t } = useTranslation()
-  const { providers } = useProviders()
+  const { providers: _allProviders } = useProviders()
+  const providers = useMemo(() => _allProviders.filter((p) => p.id !== 'aiirc'), [_allProviders])
   const { pinnedModels, togglePinnedModel, loading } = usePinnedModels()
   const [open, setOpen] = useState(true)
   const listRef = useRef<DynamicVirtualListRef>(null)
@@ -572,7 +573,7 @@ const EmptyState = styled.div`
   height: 200px;
 `
 
-const PinIconWrapper = styled.div.attrs({ className: 'pin-icon' })<{ $isPinned?: boolean }>`
+const PinIconWrapper = styled.div.attrs({ className: 'pin-icon' }) <{ $isPinned?: boolean }>`
   margin-left: auto;
   padding: 0 10px;
   opacity: ${(props) => (props.$isPinned ? 1 : 'inherit')};

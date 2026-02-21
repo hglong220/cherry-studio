@@ -708,6 +708,16 @@ export const SYSTEM_PROVIDERS_CONFIG: Record<SystemProviderId, SystemProvider> =
     models: SYSTEM_MODELS.mimo,
     isSystem: true,
     enabled: false
+  },
+  aiirc: {
+    id: 'aiirc',
+    name: 'AIIRC',
+    type: 'openai',
+    apiKey: '',
+    apiHost: 'http://localhost:3022',
+    models: [],
+    isSystem: true,
+    enabled: false
   }
 } as const
 
@@ -777,7 +787,8 @@ export const PROVIDER_LOGO_MAP: AtLeast<SystemProviderId, string> = {
   sophnet: SophnetProviderLogo,
   gateway: AIGatewayProviderLogo,
   cerebras: CerebrasProviderLogo,
-  mimo: MiMoProviderLogo
+  mimo: MiMoProviderLogo,
+  aiirc: OpenAiProviderLogo
 } as const
 
 export function getProviderLogo(providerId: string) {
@@ -1458,6 +1469,11 @@ export const PROVIDER_URLS: Record<SystemProviderId, ProviderUrls> = {
       apiKey: 'https://platform.xiaomimimo.com/#/console/usage',
       docs: 'https://platform.xiaomimimo.com/#/docs/welcome',
       models: 'https://platform.xiaomimimo.com/'
+    }
+  },
+  aiirc: {
+    api: {
+      url: 'http://localhost:3022'
     }
   }
 }
