@@ -171,30 +171,8 @@ class McpService {
    * Used by Hub server's tool registry.
    */
   public async listAllActiveServerTools(): Promise<MCPTool[]> {
-    const servers = await getMCPServersFromRedux()
-    const activeServers = servers.filter((server) => server.isActive)
-
-    const results = await Promise.allSettled(
-      activeServers.map(async (server) => {
-        const tools = await this.listToolsImpl(server)
-        const disabledTools = new Set(server.disabledTools ?? [])
-        return disabledTools.size > 0 ? tools.filter((tool) => !disabledTools.has(tool.name)) : tools
-      })
-    )
-
-    const allTools: MCPTool[] = []
-    results.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
-        allTools.push(...result.value)
-      } else {
-        logger.error(
-          `[listAllActiveServerTools] Failed to list tools from ${activeServers[index].name}:`,
-          result.reason as Error
-        )
-      }
-    })
-
-    return allTools
+    // AIIRC: MCP disabled — AI Router handles all tools
+    return []
   }
 
   /**
@@ -436,10 +414,10 @@ class McpService {
                   // Neither npx nor bun available
                   throw new Error(
                     'npx not found in PATH and bundled bun is not available. This may indicate an installation issue.\n' +
-                      'Please either:\n' +
-                      '1. Install Node.js (which includes npx) from https://nodejs.org\n' +
-                      '2. Run the MCP dependencies installer from Settings\n' +
-                      '3. Restart the application if you recently installed Node.js'
+                    'Please either:\n' +
+                    '1. Install Node.js (which includes npx) from https://nodejs.org\n' +
+                    '2. Run the MCP dependencies installer from Settings\n' +
+                    '3. Restart the application if you recently installed Node.js'
                   )
                 }
               }
@@ -479,10 +457,10 @@ class McpService {
                   // Neither system nor bundled available
                   throw new Error(
                     `${server.command} not found in PATH and bundled version is not available. This may indicate an installation issue.\n` +
-                      'Please either:\n' +
-                      '1. Install uv from https://github.com/astral-sh/uv\n' +
-                      '2. Run the MCP dependencies installer from Settings\n' +
-                      `3. Restart the application if you recently installed ${server.command}`
+                    'Please either:\n' +
+                    '1. Install uv from https://github.com/astral-sh/uv\n' +
+                    '2. Run the MCP dependencies installer from Settings\n' +
+                    `3. Restart the application if you recently installed ${server.command}`
                   )
                 }
               }
@@ -862,23 +840,9 @@ class McpService {
     }
   }
 
-  async listTools(_: Electron.IpcMainInvokeEvent, server: MCPServer) {
-    const listFunc = (server: MCPServer) => {
-      const cachedListTools = withCache<[MCPServer], MCPTool[]>(
-        this.listToolsImpl.bind(this),
-        (server) => {
-          const serverKey = this.getServerKey(server)
-          return `mcp:list_tool:${serverKey}`
-        },
-        5 * 60 * 1000, // 5 minutes TTL
-        `[MCP] Tools from ${server.name}`
-      )
-
-      const result = cachedListTools(server)
-      return result
-    }
-
-    return withSpanFunc(`${server.name}.ListTool`, 'MCP', listFunc, [server])
+  async listTools(_: Electron.IpcMainInvokeEvent, _server: MCPServer) {
+    // AIIRC: MCP disabled — AI Router handles all tools
+    return []
   }
 
   /**
@@ -888,9 +852,9 @@ class McpService {
     _: Electron.IpcMainInvokeEvent,
     { server, name, args, callId }: CallToolArgs
   ): Promise<MCPCallToolResponse> {
-    const toolCallId = callId || uuidv4()
-    const abortController = new AbortController()
-    this.activeToolCalls.set(toolCallId, abortController)
+    // AIIRC: MCP disabled — AI Router handles all tools
+    logger.info('MCP callTool blocked — AI Router handles tools', { tool: name })
+    return { content: [{ type: 'text', text: 'MCP disabled. AI Router handles all tools.' }] } as MCPCallToolResponse
 
     const callToolFunc = async ({ server, name, args }: CallToolArgs) => {
       try {

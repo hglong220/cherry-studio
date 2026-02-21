@@ -54,6 +54,10 @@ import type { StreamProcessorCallbacks } from './StreamProcessingService'
 
 const logger = loggerService.withContext('ApiService')
 
+// AIIRC: Route all chat completions through AI Router for orchestration
+const AIIRC_ROUTER_URL = 'http://localhost:3022'
+const AIIRC_ROUTER_KEY = 'dev-service-key'
+
 /**
  * Get the MCP servers to use based on the assistant's MCP mode.
  */
@@ -208,9 +212,16 @@ export async function fetchChatCompletion({
   // NOTE: Shallow copy is intentional. Provider objects are not mutated by downstream code.
   // Nested properties (if any) are never modified after creation.
   const baseProvider = getProviderByModel(assistant.model || getDefaultModel())
+  // AIIRC: Route ALL requests through AI Router
+  // - id: 'openai' forces generic OpenAI SDK provider (respects baseURL)
+  // - apiHost trailing '#' prevents formatProviderApiHost from appending /v1
+  // - type: 'openai' ensures /chat/completions endpoint format
   const providerWithRotatedKey = {
     ...baseProvider,
-    apiKey: getRotatedApiKey(baseProvider)
+    id: 'openai',
+    apiHost: 'http://localhost:3022/v1#',
+    apiKey: 'dev-service-key',
+    type: 'openai' as any
   }
 
   const AI = new AiProviderNew(assistant.model || getDefaultModel(), providerWithRotatedKey)
@@ -219,9 +230,7 @@ export async function fetchChatCompletion({
   const mcpTools: MCPTool[] = []
   onChunkReceived({ type: ChunkType.LLM_RESPONSE_CREATED })
 
-  if (isPromptToolUse(assistant) || isSupportedToolUse(assistant)) {
-    mcpTools.push(...(await fetchMcpTools(assistant)))
-  }
+  // AIIRC: ALL tools are handled by AI Router — completely disable Cherry Studio MCP
   if (prompt) {
     messages = [
       {
@@ -238,32 +247,28 @@ export async function fetchChatCompletion({
     capabilities,
     webSearchPluginConfig
   } = await buildStreamTextParams(messages, assistant, provider, {
-    mcpTools: mcpTools,
-    webSearchProviderId: assistant.webSearchProviderId,
+    mcpTools: [],
+    webSearchProviderId: undefined,
     requestOptions
   })
 
-  // Safely fallback to prompt tool use when function calling is not supported by model.
-  const usePromptToolUse =
-    isPromptToolUse(assistant) || (isToolUseModeFunction(assistant) && !isFunctionCallingModel(assistant.model))
-
-  const mcpMode = getEffectiveMcpMode(assistant)
+  // AIIRC: Force disable all MCP/tool features — AI Router handles everything
   const middlewareConfig: AiSdkMiddlewareConfig = {
     streamOutput: assistant.settings?.streamOutput ?? true,
     onChunk: onChunkReceived,
     model: assistant.model,
     enableReasoning: capabilities.enableReasoning,
-    isPromptToolUse: usePromptToolUse,
-    isSupportedToolUse: isSupportedToolUse(assistant),
+    isPromptToolUse: false,
+    isSupportedToolUse: false,
     isImageGenerationEndpoint: isDedicatedImageGenerationModel(assistant.model || getDefaultModel()),
-    webSearchPluginConfig: webSearchPluginConfig,
-    enableWebSearch: capabilities.enableWebSearch,
-    enableGenerateImage: capabilities.enableGenerateImage,
-    enableUrlContext: capabilities.enableUrlContext,
-    mcpMode,
-    mcpTools,
+    webSearchPluginConfig: undefined,
+    enableWebSearch: false,
+    enableGenerateImage: false,
+    enableUrlContext: false,
+    mcpMode: 'disabled' as any,
+    mcpTools: [],
     uiMessages,
-    knowledgeRecognition: assistant.knowledgeRecognition
+    knowledgeRecognition: undefined
   }
 
   // --- Call AI Completions ---
