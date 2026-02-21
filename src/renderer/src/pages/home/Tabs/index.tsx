@@ -130,19 +130,32 @@ const MiniStatusFooter: FC = () => {
       setTokens('--')
     }
 
-    const checks: Promise<AgentMini>[] = []
-    for (let i = 1; i <= 6; i++) {
-      const port = i === 1 ? 3011 : 4010 + i
-      checks.push(
-        fetch(`http://localhost:${port}/health`, { signal: AbortSignal.timeout(1500) })
-          .then(r => ({ id: `agent-${i}`, status: (r.ok ? 'online' : 'offline') as 'online' | 'offline' }))
-          .catch(() => ({ id: `agent-${i}`, status: 'offline' as const }))
-      )
+    // Fetch all 20 agents status through runtime-service (has Docker network access)
+    try {
+      const poolRes = await fetch('http://localhost:3003/runtime/agent-pool/status', {
+        headers: { 'x-service-key': 'dev-service-key' },
+        signal: AbortSignal.timeout(5000)
+      })
+      if (poolRes.ok) {
+        const poolData = await poolRes.json()
+        const agentList: AgentMini[] = (poolData.agents || []).map((a: any) => ({
+          id: a.id as string,
+          status: (a.status === 'busy' ? 'busy' : a.status === 'online' ? 'online' : 'offline') as AgentMini['status']
+        }))
+        if (agentList.length > 0) {
+          setAgents(agentList)
+        }
+      }
+    } catch {
+      // Fallback: check first 2 agents directly (they have host port mappings)
+      const a1: AgentMini = await fetch('http://localhost:3011/health', { signal: AbortSignal.timeout(1500) })
+        .then(r => ({ id: 'agent-1', status: (r.ok ? 'online' : 'offline') as AgentMini['status'] }))
+        .catch((): AgentMini => ({ id: 'agent-1', status: 'offline' }))
+      const a2: AgentMini = await fetch('http://localhost:4012/health', { signal: AbortSignal.timeout(1500) })
+        .then(r => ({ id: 'agent-2', status: (r.ok ? 'online' : 'offline') as AgentMini['status'] }))
+        .catch((): AgentMini => ({ id: 'agent-2', status: 'offline' }))
+      setAgents([a1, a2, ...Array.from({ length: 18 }, (_, i): AgentMini => ({ id: `agent-${i + 3}`, status: 'offline' }))])
     }
-    const results = await Promise.all(checks)
-    setAgents(results.concat(
-      Array.from({ length: 14 }, (_, i) => ({ id: `agent-${i + 7}`, status: 'offline' as const }))
-    ))
   }, [])
 
   useEffect(() => {

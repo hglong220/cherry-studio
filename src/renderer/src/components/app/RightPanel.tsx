@@ -1,6 +1,6 @@
 /**
  * AIIRC Studio — 右侧面板（监控台）
- * 双列截屏缩略图 + 接管按钮 + 扫描/添加/刷新
+ * 通过 runtime-service (port 3003) 代理获取所有 Agent 截屏
  * Apple HIG 紧凑设计
  */
 import { Input, Modal, Tooltip } from 'antd'
@@ -14,8 +14,7 @@ interface AgentInfo {
   name: string
   status: 'online' | 'busy' | 'offline'
   screenshot?: string | null
-  port: number
-  ip?: string
+  teamId?: string | null
 }
 
 interface ScanResult {
@@ -25,18 +24,29 @@ interface ScanResult {
   connecting?: boolean
 }
 
+const RUNTIME_URL = 'http://localhost:3003'
+const SERVICE_KEY = 'dev-service-key'
+const AGENT_COUNT = 20
+
+// VNC port mapping: agent-1 → 6081, agent-2 → 6082, agent-3 → 6083
+function getVncUrl(agentId: string): string {
+  const idx = parseInt(agentId.replace('agent-', ''))
+  if (idx >= 1 && idx <= 3) {
+    return `http://localhost:${6080 + idx}/vnc.html?autoconnect=true`
+  }
+  // Fallback: desktop-stream viewer
+  return `http://localhost:3032/viewer?sessionId=${agentId}`
+}
+
 const RightPanel: FC = () => {
   const [agents, setAgents] = useState<AgentInfo[]>(
     [
-      // 本机（desktop-agent on localhost）
-      { id: 'local', name: '本机', status: 'offline' as const, screenshot: null, port: 3011 },
-      // 虚拟电脑 VM-1 ~ VM-19
-      ...Array.from({ length: 19 }, (_, i) => ({
+      { id: 'local', name: '本机', status: 'offline' as const, screenshot: null },
+      ...Array.from({ length: AGENT_COUNT - 1 }, (_, i) => ({
         id: `agent-${i + 1}`,
         name: `VM-${i + 1}`,
         status: 'offline' as const,
-        screenshot: null,
-        port: 4011 + i + 1
+        screenshot: null
       }))
     ]
   )
@@ -47,38 +57,69 @@ const RightPanel: FC = () => {
 
   const fetchAll = useCallback(async () => {
     setRefreshing(true)
-    const checks = agents.map(async (agent) => {
-      try {
-        const r = await fetch(`http://localhost:${agent.port}/health`, { signal: AbortSignal.timeout(2000) })
-        const isOnline = r.ok
-        let screenshot: string | null = null
-        if (isOnline && (agent.id === 'local' || parseInt(agent.id.replace('agent-', '')) <= 5)) {
-          try {
-            const sr = await fetch(`http://localhost:${agent.port}/execute`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ tool: 'desktop.screenshot', args: {} }),
-              signal: AbortSignal.timeout(5000)
-            })
-            if (sr.ok) {
-              const data = await sr.json()
-              screenshot = data?.result?.screenshot || data?.result?.data || data?.result?.image || null
-            }
-          } catch { /* */ }
-        }
-        return { ...agent, status: isOnline ? 'online' as const : 'offline' as const, screenshot }
-      } catch {
-        return { ...agent, status: 'offline' as const, screenshot: null }
+    try {
+      // Fetch all agent screenshots through runtime-service (has Docker network access)
+      const res = await fetch(`${RUNTIME_URL}/runtime/agent-pool/screenshots`, {
+        headers: { 'x-service-key': SERVICE_KEY },
+        signal: AbortSignal.timeout(15000)
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const remoteAgents: AgentInfo[] = (data.agents || []).map((a: any) => ({
+          id: a.id,
+          name: a.id === 'agent-1' ? 'VM-1' : `VM-${a.id.replace('agent-', '')}`,
+          status: a.status === 'offline' ? 'offline' : a.status === 'busy' ? 'busy' : 'online',
+          screenshot: a.screenshot || null,
+          teamId: a.teamId || null
+        }))
+
+        // Local machine: probe localhost:3011 directly
+        let localAgent: AgentInfo = { id: 'local', name: '本机', status: 'offline', screenshot: null }
+        try {
+          const lr = await fetch('http://localhost:3011/health', { signal: AbortSignal.timeout(2000) })
+          if (lr.ok) {
+            localAgent.status = 'online'
+            // Get local screenshot
+            try {
+              const lsr = await fetch('http://localhost:3011/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tool: 'desktop.screenshot', args: {} }),
+                signal: AbortSignal.timeout(5000)
+              })
+              if (lsr.ok) {
+                const ld = await lsr.json()
+                const localArtifacts = Array.isArray(ld?.artifacts) ? ld.artifacts : []
+                localAgent.screenshot = localArtifacts[0]?.data || ld?.output?.base64 || ld?.result?.screenshot || ld?.result?.data || null
+              }
+            } catch { /* */ }
+          }
+        } catch { /* */ }
+
+        setAgents([localAgent, ...remoteAgents])
+      } else {
+        // Fallback: try direct health checks for the 2 exposed agents
+        const fallback = agents.map(async (agent) => {
+          if (agent.id === 'local') {
+            try {
+              const r = await fetch('http://localhost:3011/health', { signal: AbortSignal.timeout(2000) })
+              return { ...agent, status: r.ok ? 'online' as const : 'offline' as const }
+            } catch { return { ...agent, status: 'offline' as const } }
+          }
+          return agent
+        })
+        setAgents(await Promise.all(fallback))
       }
-    })
-    setAgents(await Promise.all(checks))
+    } catch {
+      // Network error — keep current state
+    }
     setRefreshing(false)
-  }, [agents])
+  }, [])
 
   const pollRef = useRef<ReturnType<typeof setInterval>>(null)
   useEffect(() => {
     fetchAll()
-    pollRef.current = setInterval(fetchAll, 20000)
+    pollRef.current = setInterval(fetchAll, 15000) // Poll every 15s
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, []) // eslint-disable-line
 
@@ -88,72 +129,61 @@ const RightPanel: FC = () => {
   // ── Scan Logic ──
   const handleScan = async () => {
     setScanning(true)
-    setScanResults([])
     setShowScanResults(true)
-
+    setScanResults([])
+    // Simulate LAN scan with runtime-service agent pool
     try {
-      const res = await fetch('http://localhost:3022/api/scan-lan', {
-        method: 'POST',
-        signal: AbortSignal.timeout(15000)
+      const res = await fetch(`${RUNTIME_URL}/runtime/agent-pool`, {
+        headers: { 'x-service-key': SERVICE_KEY },
+        signal: AbortSignal.timeout(5000)
       })
       if (res.ok) {
         const data = await res.json()
-        setScanResults(data.hosts || [])
-        if (!data.hosts || data.hosts.length === 0) {
-          window.toast.info('未发现局域网设备')
-        }
-      } else {
-        window.toast.error('扫描失败')
+        const results: ScanResult[] = (data.agents || [])
+          .filter((a: any) => !a.inUse || a.teamId)
+          .map((a: any) => ({
+            hostname: a.id,
+            ip: `docker-internal`,
+            os: a.inUse ? `执行中 (${a.teamId || 'unknown'})` : '空闲',
+            connecting: false
+          }))
+        setScanResults(results)
       }
-    } catch {
-      window.toast.error('后端未连接，无法扫描')
-    }
+    } catch { /* */ }
     setScanning(false)
   }
 
   const handleConnectHost = (ip: string) => {
-    setScanResults(prev => prev.map(r => r.ip === ip ? { ...r, connecting: true } : r))
-    // In real implementation: install agent on target PC, then add to agents list
-    setTimeout(() => {
-      window.toast.success(`正在连接 ${ip}...`)
-      setScanResults(prev => prev.map(r => r.ip === ip ? { ...r, connecting: false } : r))
-    }, 2000)
+    // Find the agent and open VNC
+    const agentId = ip // ip is actually the agent id from scan
+    window.open(getVncUrl(agentId), `takeover-${agentId}`, 'width=1024,height=768')
   }
 
   // ── Add PC Logic ──
   const handleAddPC = () => {
-    let ipValue = ''
+    let inputValue = ''
     Modal.confirm({
       title: '添加电脑',
-      icon: null,
-      width: 360,
       content: (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 12, color: 'var(--color-text-3)', marginBottom: 8 }}>
-            输入目标电脑的 IP 地址
-          </div>
-          <Input
-            placeholder="192.168.1.xxx"
-            onChange={(e) => { ipValue = e.target.value }}
-            style={{ borderRadius: 6 }}
-          />
-        </div>
+        <Input
+          placeholder="输入 IP 地址 (例如 192.168.1.100)"
+          onChange={e => { inputValue = e.target.value }}
+          style={{ marginTop: 8 }}
+        />
       ),
-      okText: '连接',
+      okText: '添加',
       cancelText: '取消',
-      onOk: () => {
-        if (ipValue.trim()) {
-          window.toast.success(`正在连接 ${ipValue}...`)
-        }
+      onOk() {
+        if (!inputValue.trim()) return
+        // For now just show a message
+        Modal.info({ title: '提示', content: `暂不支持手动添加外部电脑，请使用扫描功能。` })
       }
     })
   }
 
   // ── Takeover (VNC) ──
   const handleTakeover = (agent: AgentInfo) => {
-    // Open noVNC or similar in a new window
-    const vncUrl = `http://localhost:${agent.port + 100}/vnc.html?autoconnect=true`
-    window.open(vncUrl, `takeover-${agent.id}`, 'width=1024,height=768')
+    window.open(getVncUrl(agent.id), `takeover-${agent.id}`, 'width=1024,height=768')
   }
 
   return (
@@ -166,7 +196,7 @@ const RightPanel: FC = () => {
       {showScanResults && (
         <ScanPanel>
           <ScanTitle>
-            {scanning ? '正在扫描局域网...' : `发现 ${scanResults.length} 台电脑`}
+            {scanning ? '正在扫描 Agent Pool...' : `${scanResults.length} 台 Agent`}
             <ScanClose onClick={() => setShowScanResults(false)}>✕</ScanClose>
           </ScanTitle>
           {scanning && <ScanProgress />}
@@ -177,10 +207,10 @@ const RightPanel: FC = () => {
                 <ScanMeta>{r.ip} · {r.os}</ScanMeta>
               </ScanInfo>
               <ConnectBtn
-                onClick={() => handleConnectHost(r.ip)}
+                onClick={() => handleConnectHost(r.hostname)}
                 disabled={r.connecting}
               >
-                {r.connecting ? '连接中...' : '连接'}
+                {r.connecting ? '连接中...' : '接管'}
               </ConnectBtn>
             </ScanRow>
           ))}
@@ -196,7 +226,8 @@ const RightPanel: FC = () => {
               ) : (
                 <ThumbPlaceholder />
               )}
-              <LiveDot />
+              <LiveDot className={agent.status === 'busy' ? 'busy' : ''} />
+              {agent.teamId && <TaskBadge>{agent.teamId.slice(0, 6)}</TaskBadge>}
               <TakeoverBtn onClick={() => handleTakeover(agent)}>
                 <Mouse size={9} />
                 <span>接管</span>
@@ -216,7 +247,7 @@ const RightPanel: FC = () => {
       </CardGrid>
 
       <BottomBar>
-        <Tooltip title="扫描局域网" placement="top">
+        <Tooltip title="扫描 Agent Pool" placement="top">
           <BottomBtn onClick={handleScan}>
             <Wifi size={13} className={scanning ? 'spinning' : ''} />
             <span>扫描</span>
@@ -252,46 +283,35 @@ const PanelHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 10px 10px 6px;
+  padding: 10px 8px 6px;
   flex-shrink: 0;
 `
 
-const HeaderTitle = styled.span`
-  font-size: 11px;
+const HeaderTitle = styled.div`
+  font-size: 12px;
   font-weight: 600;
-  color: var(--color-text-2);
-  letter-spacing: 0.02em;
+  color: var(--color-text);
+  letter-spacing: 0.3px;
 `
 
 const CardGrid = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 4px 6px;
+  overflow-x: hidden;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  padding: 4px 6px;
   align-content: start;
-  scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
 `
 
 const MiniCard = styled.div`
   border-radius: 6px;
-  overflow: hidden;
-  border: 0.5px solid var(--color-border);
-  background: var(--color-background);
-  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  background: var(--color-background-soft);
   cursor: default;
-
-  &:hover {
-    border-color: var(--color-text-3);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  }
-  &.offline {
-    opacity: 0.4;
-    &:hover { opacity: 0.6; }
-  }
+  transition: box-shadow 0.15s;
+  &:hover { box-shadow: 0 0 0 1.5px var(--color-primary, #6366F1); }
+  &.offline { opacity: 0.4; }
 `
 
 const ScreenThumb = styled.div`
@@ -300,6 +320,7 @@ const ScreenThumb = styled.div`
   aspect-ratio: 16 / 10;
   background: #1a1a1e;
   overflow: hidden;
+  border-radius: 6px 6px 0 0;
   &.offline { background: var(--color-border); }
 `
 
@@ -321,43 +342,92 @@ const LiveDot = styled.div`
   position: absolute;
   top: 3px;
   right: 3px;
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background: #34c759;
-  box-shadow: 0 0 3px rgba(52, 199, 89, 0.6);
-`
-
-const TakeoverBtn = styled.div`
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  background: rgba(0,0,0,0.6);
-  border: 0.5px solid rgba(255,255,255,0.15);
-  border-radius: 3px;
-  padding: 2px 5px;
-  font-size: 9px;
-  color: rgba(255,255,255,0.7);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 150ms;
-  ${MiniCard}:hover & { opacity: 1; }
-  &:hover {
-    background: rgba(99, 102, 241, 0.7);
-    color: #fff;
+  background: #34D399;
+  box-shadow: 0 0 3px #34D39980;
+  &.busy {
+    background: #FBBF24;
+    box-shadow: 0 0 3px #FBBF2480;
   }
 `
 
+const TaskBadge = styled.div`
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 7px;
+  padding: 1px 3px;
+  background: rgba(99, 102, 241, 0.8);
+  color: #fff;
+  border-radius: 3px;
+  font-family: monospace;
+`
+
+const TakeoverBtn = styled.button`
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px;
+  border: none;
+  border-radius: 3px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 8px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  ${MiniCard}:hover & { opacity: 1; }
+  &:hover { background: var(--color-primary, #6366F1); }
+`
+
 const CardName = styled.div`
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 500;
-  color: var(--color-text);
-  padding: 3px 5px;
   text-align: center;
-  &.offline { color: var(--color-text-3); }
+  padding: 2px 2px 3px;
+  color: #555;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  &.offline { color: #aaa; }
+  @media (prefers-color-scheme: dark) {
+    color: #aaa;
+    &.offline { color: #555; }
+  }
+`
+
+const BottomBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-shrink: 0;
+  padding: 4px 4px;
+  border-top: 0.5px solid var(--color-border);
+`
+
+const BottomBtn = styled.button`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  background: none;
+  border: none;
+  color: var(--color-text-2);
+  font-size: 9px;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+  transition: background 0.12s, color 0.12s;
+  &:hover { background: var(--color-background-soft); color: var(--color-text); }
+  &:active { transform: scale(0.92); transition-duration: 60ms; }
+  .spinning { animation: spin 1s linear infinite; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 `
 
 /* ── Scan UI ── */
@@ -383,41 +453,42 @@ const ScanTitle = styled.div`
 
 const ScanClose = styled.span`
   cursor: pointer;
-  color: var(--color-text-3);
-  font-size: 10px;
-  &:hover { color: var(--color-text); }
+  opacity: 0.5;
+  &:hover { opacity: 1; }
 `
 
 const ScanProgress = styled.div`
   height: 2px;
-  border-radius: 1px;
   background: var(--color-border);
-  overflow: hidden;
+  border-radius: 1px;
   margin-bottom: 6px;
+  overflow: hidden;
   &::after {
     content: '';
     display: block;
-    height: 100%;
     width: 40%;
+    height: 100%;
     background: var(--color-primary, #6366F1);
     border-radius: 1px;
-    animation: scanSlide 1.2s ease-in-out infinite;
+    animation: slide 1s ease-in-out infinite;
   }
-  @keyframes scanSlide {
+  @keyframes slide {
     0% { transform: translateX(-100%); }
-    100% { transform: translateX(300%); }
+    100% { transform: translateX(350%); }
   }
 `
 
 const ScanRow = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
   padding: 4px 0;
-  & + & { border-top: 0.5px solid var(--color-border); }
+  border-bottom: 0.5px solid var(--color-border);
+  &:last-child { border-bottom: none; }
 `
 
 const ScanInfo = styled.div`
+  flex: 1;
   min-width: 0;
 `
 
@@ -444,48 +515,10 @@ const ConnectBtn = styled.button<{ disabled?: boolean }>`
   background: transparent;
   color: var(--color-primary, #6366F1);
   font-size: 10px;
-  font-weight: 500;
   cursor: pointer;
-  transition: all 150ms;
-  font-family: inherit;
-  opacity: ${p => p.disabled ? 0.5 : 1};
-  &:hover:not(:disabled) {
-    background: var(--color-primary, #6366F1);
-    color: #fff;
-  }
-`
-
-/* ── Bottom Bar ── */
-
-const BottomBar = styled.div`
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  padding: 6px 8px 8px;
-  border-top: 0.5px solid var(--color-border);
-`
-
-const BottomBtn = styled.button`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  background: none;
-  border: none;
-  color: var(--color-text-3);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
-  font-size: 9px;
-  font-weight: 500;
-  font-family: inherit;
-
-  &:hover { background: var(--bg-hover); color: var(--color-text); }
-  &:active { transform: scale(0.92); transition-duration: 60ms; }
-  .spinning { animation: spin 1s linear infinite; }
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  transition: background 0.12s, color 0.12s;
+  &:hover { background: var(--color-primary, #6366F1); color: #fff; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
 `
 
 export default RightPanel
