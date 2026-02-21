@@ -1,10 +1,11 @@
 /* ══════════════════════════════════════════════════════════════════════
-   AIIRC Studio — 色彩系统
-   深色模式：Apple HIG Dark Mode
-   浅色模式：Apple HIG Light Mode
+   AIIRC Studio — Apple HIG 色彩系统
+   主色：Apple System Blue (#007AFF)
+   灰阶：Apple System Grays
+   统一、简洁、精致
    ══════════════════════════════════════════════════════════════════════ */
 
-/* ── 深色主题 — Apple HIG systemBackground ──────────────────────── */
+/* ── 深色主题 — Apple HIG Dark ──────────────────────────────────── */
 :root {
   /* 核心灰阶 — Apple System Grays */
   --color-white: #F5F5F7;
@@ -24,17 +25,17 @@
   --color-text-2: rgba(235, 235, 245, 0.60);
   --color-text-3: rgba(235, 235, 245, 0.30);
 
-  /* 背景 — 聊天区域用更浅的灰，外框保持深灰 */
-  --color-background: #2C2C2E;
-  --color-background-soft: #3A3A3C;
-  --color-background-mute: #48484A;
-  --color-background-opacity: rgba(44, 44, 46, 0.88);
-  --inner-glow-opacity: 0.12;
+  /* 背景 — Apple systemBackground */
+  --color-background: #1C1C1E;
+  --color-background-soft: #2C2C2E;
+  --color-background-mute: #3A3A3C;
+  --color-background-opacity: rgba(28, 28, 30, 0.88);
+  --inner-glow-opacity: 0.10;
 
-  /* 品牌色 — AIIRC Indigo */
-  --color-primary: #6366F1;
-  --color-primary-soft: rgba(99, 102, 241, 0.6);
-  --color-primary-mute: rgba(99, 102, 241, 0.15);
+  /* 品牌色 — Apple System Blue */
+  --color-primary: #0A84FF;
+  --color-primary-soft: rgba(10, 132, 255, 0.55);
+  --color-primary-mute: rgba(10, 132, 255, 0.15);
 
   /* 文字与图标 */
   --color-text: var(--color-text-1);
@@ -42,7 +43,7 @@
   --color-icon: rgba(235, 235, 245, 0.55);
   --color-icon-white: #F5F5F7;
 
-  /* 边框 — Apple separator (subtle) */
+  /* 边框 — Apple separator */
   --color-border: rgba(84, 84, 88, 0.36);
   --color-border-soft: rgba(84, 84, 88, 0.20);
   --color-border-mute: rgba(84, 84, 88, 0.10);
@@ -55,19 +56,19 @@
   --color-status-warning: #FFD60A;
 
   /* 代码 */
-  --color-code-background: #3A3A3C;
-  --color-inline-code-background: rgba(99, 102, 241, 0.12);
-  --color-inline-code-text: #A5B4FC;
+  --color-code-background: #2C2C2E;
+  --color-inline-code-background: rgba(10, 132, 255, 0.10);
+  --color-inline-code-text: #64D2FF;
 
   /* 交互状态 */
   --color-hover: rgba(255, 255, 255, 0.05);
   --color-active: rgba(255, 255, 255, 0.08);
-  --color-frame-border: #48484A;
-  --color-group-background: #3A3A3C;
+  --color-frame-border: #3A3A3C;
+  --color-group-background: #2C2C2E;
 
   /* 引用 */
-  --color-reference: #1E1B4B;
-  --color-reference-text: #C4B5FD;
+  --color-reference: #1C1C1E;
+  --color-reference-text: #64D2FF;
   --color-reference-background: #2C2C2E;
 
   /* 列表项 */
@@ -75,97 +76,104 @@
   --color-list-item-hover: rgba(255, 255, 255, 0.03);
 
   /* 弹窗 */
-  --modal-background: #3A3A3C;
+  --modal-background: #2C2C2E;
 
   /* 高亮 */
   --color-highlight: rgba(0, 0, 0, 1);
   --color-background-highlight: rgba(255, 214, 10, 0.30);
   --color-background-highlight-accent: rgba(255, 159, 10, 0.45);
 
-  /* 导航栏 — 外框保持深灰 */
+  /* 导航栏 */
   --navbar-background-mac: rgba(28, 28, 30, 0.72);
   --navbar-background: #1C1C1E;
 
-  /* 聊天 — 气泡用更浅的灰 */
+  /* 聊天 */
   --chat-background: transparent;
-  --chat-background-user: rgba(255, 255, 255, 0.08);
+  --chat-background-user: rgba(255, 255, 255, 0.06);
   --chat-background-assistant: transparent;
   --chat-text-user: var(--color-text-1);
 
   --list-item-border-radius: 8px;
 }
 
-/* ── 浅色主题 ─ 参考 Notion / Apple HIG ──────────────────────────── */
+/* ── 浅色主题 — Apple HIG Light ──────────────────────────────────── */
 [theme-mode='light'] {
   --color-white: #FFFFFF;
   --color-white-soft: rgba(0, 0, 0, 0.03);
-  --color-white-mute: #F5F5F8;
+  --color-white-mute: #F2F2F7;
 
-  --color-black: #111118;
-  --color-black-soft: #1C1C2A;
-  --color-black-mute: #2A2A3E;
+  --color-black: #000000;
+  --color-black-soft: #1C1C1E;
+  --color-black-mute: #2C2C2E;
 
-  --color-gray-1: #6B6B80;
-  --color-gray-2: #9898B0;
-  --color-gray-3: #C0C0D0;
+  --color-gray-1: #8E8E93;
+  --color-gray-2: #AEAEB2;
+  --color-gray-3: #C7C7CC;
 
-  --color-text-1: rgba(17, 17, 24, 0.95);
-  --color-text-2: rgba(17, 17, 24, 0.6);
-  --color-text-3: rgba(17, 17, 24, 0.35);
+  /* 文字 — Apple labelColor Light */
+  --color-text-1: rgba(0, 0, 0, 0.85);
+  --color-text-2: rgba(60, 60, 67, 0.60);
+  --color-text-3: rgba(60, 60, 67, 0.30);
 
-  --color-background: #FAFAFE;
-  --color-background-soft: rgba(0, 0, 0, 0.025);
-  --color-background-mute: #F0F0F5;
-  --color-background-opacity: rgba(250, 250, 254, 0.92);
-  --inner-glow-opacity: 0.06;
+  /* 背景 — Apple systemBackground Light */
+  --color-background: #FFFFFF;
+  --color-background-soft: #F2F2F7;
+  --color-background-mute: #E5E5EA;
+  --color-background-opacity: rgba(255, 255, 255, 0.92);
+  --inner-glow-opacity: 0.04;
 
-  --color-primary: #6366F1;
-  --color-primary-soft: rgba(99, 102, 241, 0.6);
-  --color-primary-mute: rgba(99, 102, 241, 0.1);
+  /* 品牌色 — Apple System Blue */
+  --color-primary: #007AFF;
+  --color-primary-soft: rgba(0, 122, 255, 0.55);
+  --color-primary-mute: rgba(0, 122, 255, 0.10);
 
   --color-text: var(--color-text-1);
-  --color-text-secondary: rgba(17, 17, 24, 0.65);
-  --color-icon: rgba(17, 17, 24, 0.5);
-  --color-icon-white: #111118;
+  --color-text-secondary: rgba(60, 60, 67, 0.60);
+  --color-icon: rgba(60, 60, 67, 0.50);
+  --color-icon-white: #000000;
 
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-border-soft: rgba(0, 0, 0, 0.05);
-  --color-border-mute: rgba(0, 0, 0, 0.02);
-  --color-error: #EF4444;
-  --color-link: #4F46E5;
-  --color-code-background: #F0F0F5;
-  --color-inline-code-background: rgba(99, 102, 241, 0.08);
-  --color-inline-code-text: #6366F1;
+  /* 边框 — Apple separator Light */
+  --color-border: rgba(60, 60, 67, 0.12);
+  --color-border-soft: rgba(60, 60, 67, 0.08);
+  --color-border-mute: rgba(60, 60, 67, 0.04);
+
+  --color-error: #FF3B30;
+  --color-link: #007AFF;
+
+  --color-code-background: #F2F2F7;
+  --color-inline-code-background: rgba(0, 122, 255, 0.08);
+  --color-inline-code-text: #007AFF;
+
   --color-hover: rgba(0, 0, 0, 0.03);
   --color-active: rgba(0, 0, 0, 0.06);
-  --color-frame-border: #E0E0EA;
+  --color-frame-border: #D1D1D6;
   --color-group-background: #FFFFFF;
 
-  --color-reference: #EEF2FF;
-  --color-reference-text: #312E81;
-  --color-reference-background: #F5F3FF;
+  --color-reference: #F2F2F7;
+  --color-reference-text: #007AFF;
+  --color-reference-background: #F2F2F7;
 
   --color-list-item: #FFFFFF;
-  --color-list-item-hover: #FAFAFE;
+  --color-list-item-hover: #F2F2F7;
 
   --modal-background: #FFFFFF;
 
   --color-highlight: initial;
-  --color-background-highlight: rgba(251, 191, 36, 0.3);
-  --color-background-highlight-accent: rgba(251, 146, 60, 0.4);
+  --color-background-highlight: rgba(255, 204, 0, 0.25);
+  --color-background-highlight-accent: rgba(255, 149, 0, 0.35);
 
-  --navbar-background-mac: rgba(250, 250, 254, 0.7);
-  --navbar-background: #F5F5F8;
+  --navbar-background-mac: rgba(242, 242, 247, 0.72);
+  --navbar-background: #F2F2F7;
 
   --chat-background: transparent;
-  --chat-background-user: #F3F4F6;
+  --chat-background-user: #F2F2F7;
   --chat-background-assistant: transparent;
   --chat-text-user: var(--color-text);
 }
 
 [navbar-position='left'][theme-mode='light'] {
-  --color-list-item: #F0F0F5;
-  --color-list-item-hover: #FAFAFE;
+  --color-list-item: #F2F2F7;
+  --color-list-item-hover: #E5E5EA;
 }
 
 [navbar-position='left'][theme-mode='dark'] {

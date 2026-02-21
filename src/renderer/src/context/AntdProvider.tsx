@@ -23,7 +23,7 @@ const AntdProvider: FC<PropsWithChildren> = ({ children }) => {
   } = useSettings()
   const { theme: _theme } = useTheme()
 
-  const colorPrimary = rawColorPrimary === '#00b96b' ? '#6366F1' : rawColorPrimary
+  const colorPrimary = rawColorPrimary === '#00b96b' ? '#007AFF' : rawColorPrimary
 
   return (
     <ConfigProvider

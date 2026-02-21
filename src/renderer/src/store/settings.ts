@@ -271,7 +271,7 @@ export const initialState: SettingsState = {
   tray: true,
   theme: ThemeMode.system,
   userTheme: {
-    colorPrimary: '#6366F1', // AIIRC indigo
+    colorPrimary: '#007AFF', // AIIRC indigo
     userFontFamily: '',
     userCodeFontFamily: ''
   },

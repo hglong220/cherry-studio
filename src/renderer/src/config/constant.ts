@@ -28,7 +28,7 @@ export const THEME_COLOR_PRESETS = [
   DEFAULT_COLOR_PRIMARY,
   '#FF5470', // Coral Pink
   '#14B8A6', // Teal
-  '#6366F1', // Indigo
+  '#007AFF', // Indigo
   '#8B5CF6', // Purple
   '#EC4899', // Pink
   '#3B82F6', // Blue

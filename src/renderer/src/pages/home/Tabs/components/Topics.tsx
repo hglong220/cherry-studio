@@ -39,6 +39,7 @@ import type { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import dayjs from 'dayjs'
 import { findIndex } from 'lodash'
 import {
+  Bot,
   BrushCleaning,
   CheckSquare,
   FolderOpen,
@@ -59,7 +60,7 @@ import {
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
-import styled from 'styled-components'
+import styled, { keyframes } from 'styled-components'
 
 import { TopicManagePanel, useTopicManageMode } from './TopicManageMode'
 
@@ -588,6 +589,7 @@ export const Topics: React.FC<Props> = ({ assistant: _assistant, activeTopic, se
               <Search size={16} />
               <span>搜索聊天</span>
             </GPTButton>
+            <JarvisToggle />
           </HeaderRow>
         }
         disabled={isManageMode}>
@@ -963,5 +965,63 @@ const SelectIcon = styled.div`
 
   &.disabled {
     opacity: 0.5;
+  }
+`
+
+/* ── Jarvis Mode Toggle ── */
+const JarvisToggle: React.FC = () => {
+  const [active, setActive] = useState(false)
+
+  const toggle = useCallback(() => {
+    const next = !active
+    setActive(next)
+    window.dispatchEvent(new CustomEvent('jarvis-mode-change', { detail: next }))
+    // Best-effort sync with backend
+    fetch('http://localhost:3210/api/session/jarvis-mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: next })
+    }).catch(() => { /* gateway offline, local toggle still works */ })
+  }, [active])
+
+  return (
+    <JarvisButton $active={active} onClick={toggle}>
+      <Bot size={16} />
+      <span>{active ? 'Jarvis · 运行中' : 'Jarvis 模式'}</span>
+    </JarvisButton>
+  )
+}
+
+const jarvisGlow = keyframes`
+  0%, 100% { box-shadow: inset 0 0 0 0 rgba(52, 199, 89, 0.08); }
+  50% { box-shadow: inset 0 0 12px 0 rgba(52, 199, 89, 0.12); }
+`
+
+const JarvisButton = styled.div<{ $active: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.006em;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  -webkit-app-region: no-drag;
+  color: ${({ $active }) => $active ? '#34C759' : 'var(--text-secondary)'};
+  background: ${({ $active }) => $active ? 'rgba(52, 199, 89, 0.08)' : 'transparent'};
+  animation: ${({ $active }) => $active ? jarvisGlow : 'none'} 2.5s ease-in-out infinite;
+
+  &:hover {
+    background-color: ${({ $active }) => $active ? 'rgba(52, 199, 89, 0.15)' : 'var(--bg-hover)'};
+    color: ${({ $active }) => $active ? '#34C759' : 'var(--text-primary)'};
+  }
+
+  &:active {
+    transform: scale(0.98);
+    transition-duration: 60ms;
   }
 `

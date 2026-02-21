@@ -310,7 +310,7 @@ const MiniCard = styled.div`
   background: var(--color-background-soft);
   cursor: default;
   transition: box-shadow 0.15s;
-  &:hover { box-shadow: 0 0 0 1.5px var(--color-primary, #6366F1); }
+  &:hover { box-shadow: 0 0 0 1.5px var(--color-primary, #007AFF); }
   &.offline { opacity: 0.4; }
 `
 
@@ -359,7 +359,7 @@ const TaskBadge = styled.div`
   left: 2px;
   font-size: 7px;
   padding: 1px 3px;
-  background: rgba(99, 102, 241, 0.8);
+  background: rgba(0, 122, 255, 0.8);
   color: #fff;
   border-radius: 3px;
   font-family: monospace;
@@ -382,7 +382,7 @@ const TakeoverBtn = styled.button`
   opacity: 0;
   transition: opacity 0.15s;
   ${MiniCard}:hover & { opacity: 1; }
-  &:hover { background: var(--color-primary, #6366F1); }
+  &:hover { background: var(--color-primary, #007AFF); }
 `
 
 const CardName = styled.div`
@@ -468,7 +468,7 @@ const ScanProgress = styled.div`
     display: block;
     width: 40%;
     height: 100%;
-    background: var(--color-primary, #6366F1);
+    background: var(--color-primary, #007AFF);
     border-radius: 1px;
     animation: slide 1s ease-in-out infinite;
   }
@@ -510,14 +510,14 @@ const ConnectBtn = styled.button<{ disabled?: boolean }>`
   flex-shrink: 0;
   height: 20px;
   padding: 0 8px;
-  border: 0.5px solid var(--color-primary, #6366F1);
+  border: 0.5px solid var(--color-primary, #007AFF);
   border-radius: 4px;
   background: transparent;
-  color: var(--color-primary, #6366F1);
+  color: var(--color-primary, #007AFF);
   font-size: 10px;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
-  &:hover { background: var(--color-primary, #6366F1); color: #fff; }
+  &:hover { background: var(--color-primary, #007AFF); color: #fff; }
   &:disabled { opacity: 0.4; cursor: not-allowed; }
 `
 

@@ -205,7 +205,8 @@ const Container = styled.div`
   transition: width 0.3s;
   height: calc(100vh - var(--navbar-height));
   position: relative;
-  background-color: var(--color-background-soft);
+  background-color: var(--color-background);
+  border-right: 0.5px solid var(--color-border);
 
   &.right {
     height: calc(100vh - var(--navbar-height));
@@ -312,8 +313,8 @@ const InfoItem = styled.span`
 const ExploreTag = styled.span`
   font-size: 9px;
   font-weight: 500;
-  color: var(--color-primary, #6366F1);
-  background: rgba(99, 102, 241, 0.08);
+  color: var(--color-primary, #007AFF);
+  background: rgba(0, 122, 255, 0.08);
   padding: 1px 5px;
   border-radius: 3px;
 `

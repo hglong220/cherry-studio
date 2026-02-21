@@ -11,7 +11,7 @@ export default function useUserTheme() {
   const initUserTheme = (theme: UserTheme = userTheme) => {
     let primaryColorStr = theme.colorPrimary
     if (primaryColorStr === '#00b96b') {
-      primaryColorStr = '#6366F1' // Map legacy Cherry Studio green to AIIRC Indigo
+      primaryColorStr = '#007AFF' // Map legacy Cherry Studio green to AIIRC Indigo
     }
     const colorPrimary = Color(primaryColorStr)
 

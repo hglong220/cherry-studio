@@ -94,16 +94,16 @@ const ExploreStatusBar: FC = () => {
   return (
     <Bar>
       <BarLeft>
-        <TelescopeIcon className={paused ? '' : 'spinning'} size={13} />
+        <TelescopeIcon className={paused ? '' : 'spinning'} size={16} />
         <BarLabel>{paused ? '已暂停' : '探索中'}</BarLabel>
         <BarMeta>· 已尝试 {attempts} 种方案 · 成功 {success} 种 · {formatTime(elapsed)}</BarMeta>
       </BarLeft>
       <BarRight>
         <BarBtn onClick={handlePause} title={paused ? '继续' : '暂停'}>
-          {paused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
+          {paused ? <PlayCircle size={18} /> : <PauseCircle size={18} />}
         </BarBtn>
         <BarBtn onClick={handleStop} title="停止" className="stop">
-          <StopCircle size={14} />
+          <StopCircle size={18} />
         </BarBtn>
       </BarRight>
     </Bar>
@@ -116,56 +116,56 @@ const orbit = keyframes`
 `
 
 const Bar = styled.div`
-  height: 32px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 14px;
-  background: rgba(99, 102, 241, 0.06);
-  border-bottom: 0.5px solid rgba(99, 102, 241, 0.15);
+  padding: 0 16px;
+  background: var(--color-background);
+  border-bottom: 0.5px solid var(--color-border);
   flex-shrink: 0;
 `
 
 const BarLeft = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 `
 
 const TelescopeIcon = styled(Telescope)`
-  color: var(--color-primary, #6366F1);
+  color: #30D158;
   &.spinning { animation: ${orbit} 2s linear infinite; }
 `
 
 const BarLabel = styled.span`
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text);
 `
 
 const BarMeta = styled.span`
   font-size: 11px;
-  color: var(--color-text-3);
+  color: var(--color-text-2);
 `
 
 const BarRight = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 `
 
 const BarBtn = styled.button`
   background: none;
   border: none;
-  color: var(--color-text-3);
+  color: var(--color-text-2);
   cursor: pointer;
-  padding: 2px;
+  padding: 3px;
   border-radius: 4px;
   display: flex;
   align-items: center;
   transition: color 150ms, background 150ms;
-  &:hover { color: var(--color-text); background: rgba(0,0,0,0.05); }
-  &.stop:hover { color: #EF4444; }
+  &:hover { color: var(--color-text); background: var(--color-hover); }
+  &.stop:hover { color: #FF3B30; }
 `
 
 export default ExploreStatusBar

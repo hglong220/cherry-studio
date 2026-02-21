@@ -21,9 +21,9 @@
     --text-disabled: rgba(235, 235, 245, 0.18);
 
     /* 品牌色 */
-    --brand-primary: #6366F1;
+    --brand-primary: #007AFF;
     --brand-hover: #818CF8;
-    --brand-subtle: rgba(99, 102, 241, 0.15);
+    --brand-subtle: rgba(0, 122, 255, 0.15);
 
     /* 语义色 — Apple System Colors */
     --aiirc-success: #30D158;
@@ -38,7 +38,7 @@
 
     /* Agent 状态指示点 */
     --dot-online: #30D158;
-    --dot-busy: #6366F1;
+    --dot-busy: #007AFF;
     --dot-offline: #48484A;
     --dot-error: #FF453A;
 
@@ -81,23 +81,23 @@
     /* 浅色布局背景分层：Sidebar (最暗) -> Panel/List (中等) -> Content (纯白) */
     --bg-app: #FFFFFF;
     /* 聊天主区域纯白 */
-    --bg-sidebar: #ECECF1;
-    /* 最左侧深灰白 */
-    --bg-panel: #F4F4F7;
-    /* 列表/右侧拉栏中灰白 */
+    --bg-sidebar: #F2F2F7;
+    /* 最左侧 Apple systemGray6 */
+    --bg-panel: #F5F5F5;
+    /* 列表/右侧拉栏浅灰 */
     --bg-surface: #FFFFFF;
     /* 内容卡片/输入框 */
     --bg-elevated: #FFFFFF;
     /* 浮动面板 */
-    --bg-hover: rgba(0, 0, 0, 0.05);
+    --bg-hover: rgba(0, 0, 0, 0.04);
 
     --text-primary: #111111;
     --text-secondary: #5E5E5E;
     --text-muted: #8E8E93;
     --text-disabled: #C7C7CC;
 
-    --brand-primary: #6366F1;
-    --brand-hover: #4F46E5;
+    --brand-primary: #007AFF;
+    --brand-hover: #0056D6;
     --brand-subtle: #F2F2F7;
 
     --border-subtle: #E5E5EA;
@@ -317,7 +317,7 @@
 .aiirc-explore-bar {
     height: 36px;
     background: var(--brand-subtle);
-    border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+    border-bottom: 1px solid rgba(0, 122, 255, 0.2);
     display: flex;
     align-items: center;
     gap: var(--space-3);

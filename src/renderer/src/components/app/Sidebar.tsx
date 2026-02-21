@@ -161,7 +161,7 @@ const Sidebar: FC<SidebarProps> = ({ onPanelToggle }) => {
     {
       key: 'add-custom',
       label: (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--brand-primary, #6366F1)' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--brand-primary, #007AFF)' }}>
           <Plus size={14} />
           添加自定义
         </span>

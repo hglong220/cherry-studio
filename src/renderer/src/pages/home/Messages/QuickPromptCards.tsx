@@ -42,7 +42,7 @@ const QuickPromptCards: FC = () => {
             <CardsRow>
                 {QUICK_PROMPTS.map((item, i) => (
                     <Card key={i} onClick={() => handleClick(item.prompt)}>
-                        <item.icon size={16} color="var(--color-primary, #6366F1)" />
+                        <item.icon size={16} color="var(--color-primary, #007AFF)" />
                         <CardTitle>{item.title}</CardTitle>
                         <CardDesc>{item.desc}</CardDesc>
                     </Card>
@@ -97,8 +97,8 @@ const Card = styled.div`
   transition: border-color 150ms, background 150ms, transform 80ms;
 
   &:hover {
-    border-color: var(--color-primary, #6366F1);
-    background: rgba(99, 102, 241, 0.04);
+    border-color: var(--color-primary, #007AFF);
+    background: rgba(0, 122, 255, 0.04);
   }
   &:active {
     transform: scale(0.98);
