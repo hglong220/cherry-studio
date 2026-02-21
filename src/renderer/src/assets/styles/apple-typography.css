@@ -1,0 +1,215 @@
+/* ══════════════════════════════════════════════════════════════════════
+   AIIRC Studio — Apple HIG 排版系统
+   
+   Apple Typography Guidelines:
+   — SF Pro Display: 大标题 (20pt+)
+   — SF Pro Text: 正文 (< 20pt)
+   — Line heights: Apple 标准 ≈ 1.19 (标题) / 1.47 (正文)
+   — Letter spacing: -0.022em (标题) / -0.006em (正文) / 0 (小字)
+   — Font weights: Regular(400) / Medium(500) / Semibold(600) / Bold(700)
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Apple 排版变量 ──────────────────────────────────────────────── */
+:root {
+    /* Apple 标准字号 (pt → px 约 1.33x, 但屏幕上按 px 直接用) */
+    --apple-title-1: 20px;
+    /* Large Title */
+    --apple-title-2: 17px;
+    /* Title 1 */
+    --apple-title-3: 15px;
+    /* Title 2 */
+    --apple-headline: 15px;
+    /* Headline (SF Pro Text, Semibold) */
+    --apple-body: 13px;
+    /* Body — macOS default */
+    --apple-callout: 13px;
+    /* Callout */
+    --apple-subhead: 13px;
+    /* Subheadline */
+    --apple-footnote: 12px;
+    /* Footnote */
+    --apple-caption-1: 11px;
+    /* Caption 1 */
+    --apple-caption-2: 10px;
+    /* Caption 2 */
+
+    /* Apple 标准行高 */
+    --apple-lh-title: 1.19;
+    --apple-lh-body: 1.47;
+    --apple-lh-caption: 1.27;
+
+    /* Apple 标准字间距 */
+    --apple-ls-title: -0.022em;
+    --apple-ls-body: -0.006em;
+    --apple-ls-tight: -0.012em;
+}
+
+/* ── 全局排版基础 ────────────────────────────────────────────────── */
+body {
+    font-size: var(--apple-body) !important;
+    line-height: var(--apple-lh-body) !important;
+    letter-spacing: var(--apple-ls-body) !important;
+    font-weight: 400 !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    text-rendering: optimizeLegibility !important;
+    font-feature-settings: 'kern' 1, 'liga' 1 !important;
+}
+
+/* ── 标题层级 — Apple Dynamic Type ───────────────────────────────── */
+h1 {
+    font-size: var(--apple-title-1) !important;
+    font-weight: 700 !important;
+    line-height: var(--apple-lh-title) !important;
+    letter-spacing: -0.026em !important;
+}
+
+h2 {
+    font-size: var(--apple-title-2) !important;
+    font-weight: 700 !important;
+    line-height: var(--apple-lh-title) !important;
+    letter-spacing: var(--apple-ls-title) !important;
+}
+
+h3 {
+    font-size: var(--apple-title-3) !important;
+    font-weight: 600 !important;
+    line-height: 1.25 !important;
+    letter-spacing: var(--apple-ls-title) !important;
+}
+
+h4 {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1.29 !important;
+    letter-spacing: var(--apple-ls-tight) !important;
+}
+
+h5 {
+    font-size: var(--apple-body) !important;
+    font-weight: 600 !important;
+    line-height: var(--apple-lh-body) !important;
+    letter-spacing: var(--apple-ls-body) !important;
+}
+
+h6 {
+    font-size: var(--apple-subhead) !important;
+    font-weight: 600 !important;
+    line-height: var(--apple-lh-body) !important;
+    letter-spacing: 0 !important;
+}
+
+/* ── 段落与正文 ──────────────────────────────────────────────────── */
+p {
+    font-size: var(--apple-body);
+    line-height: var(--apple-lh-body);
+    letter-spacing: var(--apple-ls-body);
+    font-weight: 400;
+}
+
+/* ── 列表 ────────────────────────────────────────────────────────── */
+li {
+    font-size: var(--apple-body);
+    line-height: var(--apple-lh-body);
+    letter-spacing: var(--apple-ls-body);
+}
+
+/* ── 小字 / Caption ──────────────────────────────────────────────── */
+small,
+.caption,
+.footnote {
+    font-size: var(--apple-footnote);
+    line-height: var(--apple-lh-caption);
+    letter-spacing: 0;
+    color: var(--color-text-2);
+}
+
+/* ── 按钮 — Apple 标准 15px Medium ───────────────────────────────── */
+button,
+.ant-btn {
+    font-size: var(--apple-subhead) !important;
+    font-weight: 500 !important;
+    letter-spacing: var(--apple-ls-body) !important;
+    line-height: var(--apple-lh-body) !important;
+}
+
+.ant-btn-sm {
+    font-size: var(--apple-subhead) !important;
+}
+
+/* ── 输入框 ──────────────────────────────────────────────────────── */
+input,
+textarea,
+select,
+.ant-input,
+.ant-select {
+    font-size: var(--apple-body) !important;
+    letter-spacing: var(--apple-ls-body) !important;
+    line-height: var(--apple-lh-body) !important;
+}
+
+/* ── 标签 / Tabs ─────────────────────────────────────────────────── */
+.ant-tabs-tab {
+    font-size: var(--apple-subhead) !important;
+    font-weight: 500 !important;
+}
+
+/* ── 下拉菜单 ────────────────────────────────────────────────────── */
+.ant-dropdown-menu-item {
+    font-size: var(--apple-subhead) !important;
+    line-height: var(--apple-lh-body) !important;
+}
+
+/* ── Modal ────────────────────────────────────────────────────────── */
+.ant-modal-title {
+    font-size: var(--apple-headline) !important;
+    font-weight: 600 !important;
+    letter-spacing: var(--apple-ls-tight) !important;
+}
+
+.ant-modal-body {
+    font-size: var(--apple-body) !important;
+}
+
+/* ── 通知 / Toast ────────────────────────────────────────────────── */
+.ant-message-notice-content {
+    font-size: var(--apple-subhead) !important;
+    font-weight: 500 !important;
+}
+
+/* ── 代码 ────────────────────────────────────────────────────────── */
+code,
+pre {
+    font-size: var(--apple-subhead) !important;
+    line-height: 1.6 !important;
+}
+
+/* ── strong / bold ───────────────────────────────────────────────── */
+strong,
+b {
+    font-weight: 600;
+}
+
+/* ── Sidebar 排版 ────────────────────────────────────────────────── */
+#app-sidebar {
+    font-size: var(--apple-caption-1);
+    letter-spacing: 0;
+}
+
+/* ── 聊天区域 — 正文使用 Body 字号 ───────────────────────────────── */
+#messages {
+    font-size: var(--apple-body);
+    line-height: var(--apple-lh-body);
+    letter-spacing: var(--apple-ls-body);
+}
+
+/* ── Switch / Checkbox 标签 ──────────────────────────────────────── */
+.ant-switch {
+    font-size: var(--apple-subhead) !important;
+}
+
+/* ── Tooltip ─────────────────────────────────────────────────────── */
+.ant-tooltip-inner {
+    font-size: var(--apple-footnote) !important;
+    font-weight: 500 !important;
+}

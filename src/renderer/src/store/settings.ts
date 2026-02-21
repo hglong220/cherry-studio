@@ -47,7 +47,7 @@ export type SendMessageShortcut = 'Enter' | 'Shift+Enter' | 'Ctrl+Enter' | 'Comm
 // Re-export for backward compatibility
 export { DEFAULT_SIDEBAR_ICONS }
 
-export interface NutstoreSyncRuntime extends RemoteSyncState {}
+export interface NutstoreSyncRuntime extends RemoteSyncState { }
 
 export type AssistantIconType = 'model' | 'emoji' | 'none'
 
@@ -271,7 +271,7 @@ export const initialState: SettingsState = {
   tray: true,
   theme: ThemeMode.system,
   userTheme: {
-    colorPrimary: '#00b96b',
+    colorPrimary: '#6366F1', // AIIRC indigo
     userFontFamily: '',
     userCodeFontFamily: ''
   },
@@ -317,7 +317,7 @@ export const initialState: SettingsState = {
   codeFancyBlock: true,
   mathEngine: 'KaTeX',
   mathEnableSingleDollar: true,
-  messageStyle: 'plain',
+  messageStyle: 'bubble', // AIIRC: Gemini 风格，左右气泡布局
   foldDisplayMode: 'expanded',
   gridColumns: 2,
   gridPopoverTrigger: 'click',
@@ -437,7 +437,7 @@ export const initialState: SettingsState = {
   // Developer mode
   enableDeveloperMode: false,
   // UI
-  navbarPosition: 'top',
+  navbarPosition: 'left',
   // API Server
   apiServer: {
     enabled: false,

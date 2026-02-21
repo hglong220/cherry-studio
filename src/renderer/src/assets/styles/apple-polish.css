@@ -1,0 +1,109 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   AIIRC Studio — Apple HIG 精修层 v3
+   
+   原则：
+   1. 绝不用 !important
+   2. 绝不覆盖已有组件的 focus/hover 样式
+   3. 只补充缺失的 Apple 细节
+   4. 只用低特异性选择器
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 全局过渡 — Apple 标准 ease(0.2, 0, 0, 1) ───────────────────── */
+.ant-dropdown-menu-item,
+.ant-tabs-tab,
+.ant-collapse-header {
+    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ── 按钮按下 — Apple 微缩反馈 ───────────────────────────────────── */
+.ant-btn:active:not(:disabled) {
+    transform: scale(0.97);
+    transition-duration: 60ms;
+}
+
+/* ── 下拉菜单 — Apple 10px 圆角 + 内间距 ─────────────────────────── */
+.ant-dropdown-menu {
+    padding: 4px;
+}
+
+.ant-dropdown-menu-item {
+    border-radius: 6px;
+    margin: 1px 0;
+}
+
+.ant-dropdown-menu-item-divider {
+    margin: 4px 8px;
+}
+
+/* ── Modal — Apple sheet 14px 圆角 ────────────────────────────────── */
+.ant-modal-content {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.ant-modal-header {
+    border-bottom: none;
+}
+
+/* ── Tooltip — Apple 紧凑 popover ────────────────────────────────── */
+.ant-tooltip-inner {
+    border-radius: 7px;
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+/* ── 选择器 — Apple 圆角 ─────────────────────────────────────────── */
+.ant-select-dropdown {
+    border-radius: 10px;
+    padding: 4px;
+}
+
+.ant-select-item {
+    border-radius: 6px;
+}
+
+/* ── Popover — Apple 圆角 ────────────────────────────────────────── */
+.ant-popover-inner {
+    border-radius: 12px;
+}
+
+/* ── 消息通知 — Apple pill 圆角 ──────────────────────────────────── */
+.ant-message-notice-content {
+    border-radius: 10px;
+}
+
+/* ── 代码块 — Apple 圆角 ─────────────────────────────────────────── */
+.markdown pre {
+    border-radius: 10px;
+}
+
+.markdown p code,
+.markdown li code {
+    border-radius: 5px;
+    font-size: 0.9em;
+    padding: 2px 6px;
+}
+
+/* ── 列表项 — 点击微缩 ──────────────────────────────────────────── */
+.topic-item:active,
+.assistant-item:active {
+    transform: scale(0.98);
+    transition-duration: 60ms;
+}
+
+/* ── 页面切换 — 淡入 ─────────────────────────────────────────────── */
+@keyframes aiirc-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#messages {
+    animation: aiirc-fade-in 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}

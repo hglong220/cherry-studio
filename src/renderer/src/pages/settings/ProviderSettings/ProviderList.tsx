@@ -1,64 +1,28 @@
-import type { DropResult } from '@hello-pangea/dnd'
+// AIIRC: 合并视图 - 所有服务商卡片在一个页面，每个带内联 API Key 输入
 import { loggerService } from '@logger'
-import {
-  DraggableVirtualList,
-  type DraggableVirtualListRef,
-  useDraggableReorder
-} from '@renderer/components/DraggableList'
-import { DeleteIcon, EditIcon } from '@renderer/components/Icons'
 import { ProviderAvatar } from '@renderer/components/ProviderAvatar'
+import Scrollbar from '@renderer/components/Scrollbar'
 import { useAllProviders, useProviders } from '@renderer/hooks/useProvider'
-import { useTimer } from '@renderer/hooks/useTimer'
 import ImageStorage from '@renderer/services/ImageStorage'
-import type { Provider, ProviderType } from '@renderer/types'
+import type { Provider } from '@renderer/types'
 import { isSystemProvider } from '@renderer/types'
-import { getFancyProviderName, matchKeywordsInModel, matchKeywordsInProvider, uuid } from '@renderer/utils'
-import type { MenuProps } from 'antd'
-import { Button, Dropdown, Input, Tag } from 'antd'
-import { GripVertical, PlusIcon, Search, UserPen } from 'lucide-react'
+import { getFancyProviderName, uuid } from '@renderer/utils'
+import { Button, Input, Switch } from 'antd'
+import { PlusIcon } from 'lucide-react'
 import type { FC } from 'react'
-import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router-dom'
 import styled from 'styled-components'
-import useSWRImmutable from 'swr/immutable'
 
 import AddProviderPopup from './AddProviderPopup'
-import ModelNotesPopup from './ModelNotesPopup'
-import ProviderSetting from './ProviderSetting'
-import UrlSchemaInfoPopup from './UrlSchemaInfoPopup'
 
 const logger = loggerService.withContext('ProviderList')
 
-const BUTTON_WRAPPER_HEIGHT = 50
-
-const getIsOvmsSupported = async (): Promise<boolean> => {
-  try {
-    const result = await window.api.ovms.isSupported()
-    return result
-  } catch (e) {
-    logger.warn('Fetching isOvmsSupported failed. Fallback to false.', e as Error)
-    return false
-  }
-}
-
 const ProviderList: FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
   const providers = useAllProviders()
-  const { updateProviders, addProvider, removeProvider, updateProvider } = useProviders()
-  const { setTimeoutTimer } = useTimer()
-  const [selectedProvider, _setSelectedProvider] = useState<Provider>(providers[0])
+  const { updateProviders, addProvider, updateProvider } = useProviders()
   const { t } = useTranslation()
-  const [searchText, setSearchText] = useState<string>('')
-  const [dragging, setDragging] = useState(false)
   const [providerLogos, setProviderLogos] = useState<Record<string, string>>({})
-  const listRef = useRef<DraggableVirtualListRef>(null)
-
-  const { data: isOvmsSupported } = useSWRImmutable('ovms/isSupported', getIsOvmsSupported)
-
-  const setSelectedProvider = useCallback((provider: Provider) => {
-    startTransition(() => _setSelectedProvider(provider))
-  }, [])
 
   useEffect(() => {
     const loadAllLogos = async () => {
@@ -77,89 +41,21 @@ const ProviderList: FC = () => {
       }
       setProviderLogos(logos)
     }
-
     loadAllLogos()
   }, [providers])
 
-  useEffect(() => {
-    if (searchParams.get('id')) {
-      const providerId = searchParams.get('id')
-      const provider = providers.find((p) => p.id === providerId)
-      if (provider) {
-        setSelectedProvider(provider)
-        // 滚动到选中的 provider
-        const index = providers.findIndex((p) => p.id === providerId)
-        if (index >= 0) {
-          setTimeoutTimer(
-            'scroll-to-selected-provider',
-            () => listRef.current?.scrollToIndex(index, { align: 'center' }),
-            100
-          )
-        }
-      } else {
-        setSelectedProvider(providers[0])
-      }
-      searchParams.delete('id')
-      setSearchParams(searchParams)
+  // AIIRC: 只显示已启用的 + 顶级的 + 自定义的
+  const topProviders = ['openai', 'anthropic', 'gemini', 'deepseek']
+  const filteredProviders = providers.filter((provider) => {
+    if (!provider.enabled && isSystemProvider(provider) && !topProviders.includes(provider.id)) {
+      return false
     }
-  }, [providers, searchParams, setSearchParams, setSelectedProvider, setTimeoutTimer])
-
-  // Handle provider add key from URL schema
-  useEffect(() => {
-    const handleProviderAddKey = async (data: {
-      id: string
-      apiKey: string
-      baseUrl: string
-      type?: ProviderType
-      name?: string
-    }) => {
-      const { id } = data
-
-      const { updatedProvider, isNew, displayName } = await UrlSchemaInfoPopup.show(data)
-      window.navigate(`/settings/provider?id=${id}`)
-
-      if (!updatedProvider) {
-        return
-      }
-
-      if (isNew) {
-        addProvider(updatedProvider)
-      } else {
-        updateProvider(updatedProvider)
-      }
-
-      setSelectedProvider(updatedProvider)
-      window.toast.success(t('settings.models.provider_key_added', { provider: displayName }))
-    }
-
-    // 检查 URL 参数
-    const addProviderData = searchParams.get('addProviderData')
-    if (!addProviderData) {
-      return
-    }
-
-    try {
-      const { id, apiKey: newApiKey, baseUrl, type, name } = JSON.parse(addProviderData)
-      if (!id || !newApiKey || !baseUrl) {
-        window.toast.error(t('settings.models.provider_key_add_failed_by_invalid_data'))
-        window.navigate('/settings/provider')
-        return
-      }
-
-      handleProviderAddKey({ id, apiKey: newApiKey, baseUrl, type, name })
-    } catch (error) {
-      window.toast.error(t('settings.models.provider_key_add_failed_by_invalid_data'))
-      window.navigate('/settings/provider')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams])
+    return true
+  })
 
   const onAddProvider = async () => {
     const { name: providerName, type, logo } = await AddProviderPopup.show()
-
-    if (!providerName.trim()) {
-      return
-    }
+    if (!providerName.trim()) return
 
     const provider = {
       id: uuid(),
@@ -172,301 +68,112 @@ const ProviderList: FC = () => {
       isSystem: false
     } as Provider
 
-    let updatedLogos = { ...providerLogos }
     if (logo) {
       try {
         await ImageStorage.set(`provider-${provider.id}`, logo)
-        updatedLogos = {
-          ...updatedLogos,
-          [provider.id]: logo
-        }
-        setProviderLogos(updatedLogos)
+        setProviderLogos((prev) => ({ ...prev, [provider.id]: logo }))
       } catch (error) {
         logger.error('Failed to save logo', error as Error)
-        window.toast.error(t('message.error.save_provider_logo'))
       }
     }
 
     addProvider(provider)
-    setSelectedProvider(provider)
   }
 
-  const getDropdownMenus = (provider: Provider): MenuProps['items'] => {
-    const noteMenu = {
-      label: t('settings.provider.notes.title'),
-      key: 'notes',
-      icon: <UserPen size={14} />,
-      onClick: () => ModelNotesPopup.show({ provider })
-    }
-
-    const editMenu = {
-      label: t('common.edit'),
-      key: 'edit',
-      icon: <EditIcon size={14} />,
-      async onClick() {
-        const { name, type, logoFile, logo } = await AddProviderPopup.show(provider)
-
-        if (name) {
-          updateProvider({ ...provider, name, type })
-          if (provider.id) {
-            if (logo) {
-              try {
-                await ImageStorage.set(`provider-${provider.id}`, logo)
-                setProviderLogos((prev) => ({
-                  ...prev,
-                  [provider.id]: logo
-                }))
-              } catch (error) {
-                logger.error('Failed to save logo', error as Error)
-                window.toast.error(t('message.error.update_provider_logo'))
-              }
-            } else if (logo === undefined && logoFile === undefined) {
-              try {
-                await ImageStorage.set(`provider-${provider.id}`, '')
-                setProviderLogos((prev) => {
-                  const newLogos = { ...prev }
-                  delete newLogos[provider.id]
-                  return newLogos
-                })
-              } catch (error) {
-                logger.error('Failed to reset logo', error as Error)
-              }
-            }
-          }
-        }
+  const onToggleProvider = (provider: Provider, enabled: boolean) => {
+    updateProvider({ ...provider, enabled })
+    if (enabled) {
+      const reordered = [...providers]
+      const idx = reordered.findIndex((p) => p.id === provider.id)
+      if (idx > 0) {
+        const [item] = reordered.splice(idx, 1)
+        reordered.unshift({ ...item, enabled: true })
+        updateProviders(reordered)
       }
-    }
-
-    const deleteMenu = {
-      label: t('common.delete'),
-      key: 'delete',
-      icon: <DeleteIcon size={14} className="lucide-custom" />,
-      danger: true,
-      async onClick() {
-        window.modal.confirm({
-          title: t('settings.provider.delete.title'),
-          content: t('settings.provider.delete.content'),
-          okButtonProps: { danger: true },
-          okText: t('common.delete'),
-          centered: true,
-          onOk: async () => {
-            // 删除provider前先清理其logo
-            if (provider.id) {
-              try {
-                await ImageStorage.remove(`provider-${provider.id}`)
-                setProviderLogos((prev) => {
-                  const newLogos = { ...prev }
-                  delete newLogos[provider.id]
-                  return newLogos
-                })
-              } catch (error) {
-                logger.error('Failed to delete logo', error as Error)
-              }
-            }
-
-            setSelectedProvider(providers.filter((p) => isSystemProvider(p))[0])
-            removeProvider(provider)
-          }
-        })
-      }
-    }
-
-    const menus = [editMenu, noteMenu, deleteMenu]
-
-    if (providers.filter((p) => p.id === provider.id).length > 1) {
-      return menus
-    }
-
-    if (isSystemProvider(provider)) {
-      return [noteMenu]
-    } else if (provider.isSystem) {
-      // 这里是处理数据中存在新版本删掉的系统提供商的情况
-      // 未来期望能重构一下，不要依赖isSystem字段
-      return [noteMenu, deleteMenu]
-    } else {
-      return menus
     }
   }
 
-  const filteredProviders = providers.filter((provider) => {
-    // don't show it when isOvmsSupported is loading
-    if (provider.id === 'ovms' && !isOvmsSupported) {
-      return false
-    }
-
-    const keywords = searchText.toLowerCase().split(/\s+/).filter(Boolean)
-    const isProviderMatch = matchKeywordsInProvider(keywords, provider)
-    const isModelMatch = provider.models.some((model) => matchKeywordsInModel(keywords, model))
-    return isProviderMatch || isModelMatch
-  })
-
-  const { onDragEnd: handleReorder, itemKey } = useDraggableReorder({
-    originalList: providers,
-    filteredList: filteredProviders,
-    onUpdate: updateProviders,
-    itemKey: 'id'
-  })
-
-  const handleDragStart = useCallback(() => {
-    setDragging(true)
-  }, [])
-
-  const handleDragEnd = useCallback(
-    (result: DropResult) => {
-      setDragging(false)
-      handleReorder(result)
-    },
-    [handleReorder]
-  )
+  const onUpdateApiKey = (provider: Provider, apiKey: string) => {
+    updateProvider({ ...provider, apiKey })
+  }
 
   return (
-    <Container className="selectable">
-      <ProviderListContainer>
-        <AddButtonWrapper>
-          <Input
-            type="text"
-            placeholder={t('settings.provider.search')}
-            value={searchText}
-            style={{ borderRadius: 'var(--list-item-border-radius)', height: 35 }}
-            suffix={<Search size={14} />}
-            onChange={(e) => setSearchText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                e.stopPropagation()
-                setSearchText('')
-              }
-            }}
-            allowClear
-            disabled={dragging}
-          />
-        </AddButtonWrapper>
-        <DraggableVirtualList
-          ref={listRef}
-          list={filteredProviders}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          estimateSize={useCallback(() => 40, [])}
-          itemKey={itemKey}
-          overscan={3}
-          style={{
-            height: `calc(100% - 2 * ${BUTTON_WRAPPER_HEIGHT}px)`
-          }}
-          scrollerStyle={{
-            padding: 8,
-            paddingRight: 5
-          }}
-          itemContainerStyle={{ paddingBottom: 5 }}>
-          {(provider) => (
-            <Dropdown menu={{ items: getDropdownMenus(provider) }} trigger={['contextMenu']}>
-              <ProviderListItem
-                key={provider.id}
-                className={provider.id === selectedProvider?.id ? 'active' : ''}
-                onClick={() => setSelectedProvider(provider)}>
-                <DragHandle>
-                  <GripVertical size={12} />
-                </DragHandle>
-                <ProviderAvatar
-                  style={{
-                    width: 24,
-                    height: 24
-                  }}
-                  provider={provider}
-                  customLogos={providerLogos}
-                />
-                <ProviderItemName className="text-nowrap">{getFancyProviderName(provider)}</ProviderItemName>
-                {provider.enabled && (
-                  <Tag color="green" style={{ marginLeft: 'auto', marginRight: 0, borderRadius: 16 }}>
-                    ON
-                  </Tag>
-                )}
-              </ProviderListItem>
-            </Dropdown>
-          )}
-        </DraggableVirtualList>
-        <AddButtonWrapper>
+    <MergedContainer className="selectable">
+      <Scrollbar style={{ flex: 1, padding: '16px 24px' }}>
+        <div style={{ maxWidth: 640, margin: '0 auto' }}>
+          {filteredProviders.map((provider) => (
+            <ProviderRow key={provider.id}>
+              <ProviderAvatar
+                style={{ width: 28, height: 28, flexShrink: 0 }}
+                provider={provider}
+                customLogos={providerLogos}
+              />
+              <ProviderName>{getFancyProviderName(provider)}</ProviderName>
+              <ApiKeyInput
+                size="small"
+                value={provider.apiKey}
+                placeholder="API Key"
+                onChange={(e) => onUpdateApiKey(provider, e.target.value)}
+              />
+              <Switch
+                size="small"
+                checked={provider.enabled}
+                onChange={(enabled) => onToggleProvider(provider, enabled)}
+              />
+            </ProviderRow>
+          ))}
           <Button
-            style={{ width: '100%', borderRadius: 'var(--list-item-border-radius)' }}
-            icon={<PlusIcon size={16} />}
-            onClick={onAddProvider}
-            disabled={dragging}>
-            {t('button.add')}
+            style={{ width: '100%', borderRadius: 10, marginTop: 8, height: 36 }}
+            icon={<PlusIcon size={14} />}
+            onClick={onAddProvider}>
+            自定义
           </Button>
-        </AddButtonWrapper>
-      </ProviderListContainer>
-      <ProviderSetting providerId={selectedProvider.id} key={selectedProvider.id} />
-    </Container>
+        </div>
+      </Scrollbar>
+    </MergedContainer>
   )
 }
 
-const Container = styled.div`
+const MergedContainer = styled.div`
   width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-`
-
-const ProviderListContainer = styled.div`
   display: flex;
   flex-direction: column;
-  min-width: calc(var(--settings-width) + 10px);
-  height: calc(100vh - var(--navbar-height));
-  padding-bottom: 5px;
-  border-right: 0.5px solid var(--color-border);
+  height: 100%;
+  overflow: hidden;
 `
 
-const ProviderListItem = styled.div`
+const ProviderRow = styled.div`
   display: flex;
-  flex-direction: row;
   align-items: center;
-  padding: 5px 10px;
-  width: 100%;
-  border-radius: var(--list-item-border-radius);
-  font-size: 14px;
-  transition: all 0.2s ease-in-out;
-  border: 0.5px solid transparent;
-  user-select: none;
-  cursor: pointer;
+  gap: 12px;
+  padding: 12px 10px;
+  border-radius: 10px;
+  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1);
   &:hover {
-    background: var(--color-background-soft);
+    background: var(--bg-hover);
   }
-  &.active {
-    background: var(--color-background-soft);
-    border: 0.5px solid var(--color-border);
-    font-weight: bold !important;
+  & + & {
+    border-top: 0.5px solid var(--color-border-soft);
   }
 `
 
-const DragHandle = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: -8px;
-  width: 12px;
-  color: var(--color-text-3);
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-  cursor: grab;
-
-  ${ProviderListItem}:hover & {
-    opacity: 1;
-  }
-
-  &:active {
-    cursor: grabbing;
-  }
-`
-
-const ProviderItemName = styled.div`
-  margin-left: 10px;
+const ProviderName = styled.span`
+  font-size: 13px;
   font-weight: 500;
+  color: var(--color-text-1);
+  white-space: nowrap;
+  min-width: 90px;
+  flex-shrink: 0;
 `
 
-const AddButtonWrapper = styled.div`
-  height: ${BUTTON_WRAPPER_HEIGHT}px;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 10px 8px;
+const ApiKeyInput = styled(Input.Password)`
+  flex: 1;
+  min-width: 0;
+  &.ant-input-password, &.ant-input-affix-wrapper {
+    height: 30px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
 `
 
 export default ProviderList

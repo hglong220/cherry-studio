@@ -41,6 +41,7 @@ import MessageAnchorLine from './MessageAnchorLine'
 import MessageGroup from './MessageGroup'
 import NarrowLayout from './NarrowLayout'
 import Prompt from './Prompt'
+import QuickPromptCards from './QuickPromptCards'
 import { MessagesContainer, ScrollContainer } from './shared'
 
 interface MessagesProps {
@@ -335,7 +336,8 @@ const Messages: React.FC<MessagesProps> = ({ assistant, topic, setActiveTopic, o
           </ContextMenu>
         </InfiniteScroll>
 
-        {showPrompt && <Prompt assistant={assistant} key={assistant.prompt} topic={topic} />}
+        {/* AIIRC: 空对话时显示快捷指令卡片 */}
+        {displayMessages.length === 0 && <QuickPromptCards />}
       </NarrowLayout>
       {messageNavigation === 'anchor' && <MessageAnchorLine messages={displayMessages} />}
       <SelectionBox

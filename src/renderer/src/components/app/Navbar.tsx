@@ -72,12 +72,12 @@ const NavbarContainer = styled.div<{ $isFullScreen: boolean }>`
 `
 
 const NavbarLeftContainer = styled.div`
-  /* min-width: ${isMac ? 'calc(var(--assistants-width) - 20px)' : 'var(--assistants-width)'}; */
   padding: 0 10px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 13px;
   color: var(--color-text-1);
 `
 
@@ -87,7 +87,8 @@ const NavbarCenterContainer = styled.div`
   align-items: center;
   padding: 0 ${isMac ? '20px' : 0};
   padding-left: 10px;
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 13px;
   color: var(--color-text-1);
   position: relative;
 `
@@ -109,7 +110,8 @@ const NavbarMainContainer = styled.div<{ $isFullscreen: boolean }>`
   justify-content: space-between;
   padding-right: ${isMac ? '20px' : 0};
   padding-left: 10px;
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 13px;
   color: var(--color-text-1);
   padding-right: ${({ $isFullscreen }) => ($isFullscreen ? '12px' : isWin ? '140px' : isLinux ? '120px' : '12px')};
 `

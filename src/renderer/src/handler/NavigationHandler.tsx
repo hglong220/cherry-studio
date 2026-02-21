@@ -1,36 +1,12 @@
-import { useAppSelector } from '@renderer/store'
+// NavigationHandler — 设置面板已删除，此组件仅保留 macOS 菜单事件处理
 import { IpcChannel } from '@shared/IpcChannel'
 import { useEffect } from 'react'
-import { useHotkeys } from 'react-hotkeys-hook'
-import { useLocation, useNavigate } from 'react-router-dom'
 
 const NavigationHandler: React.FC = () => {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const showSettingsShortcutEnabled = useAppSelector(
-    (state) => state.shortcuts.shortcuts.find((s) => s.key === 'show_settings')?.enabled
-  )
-
-  useHotkeys(
-    'meta+, ! ctrl+,',
-    function () {
-      if (location.pathname.startsWith('/settings')) {
-        return
-      }
-      navigate('/settings/provider')
-    },
-    {
-      splitKey: '!',
-      enableOnContentEditable: true,
-      enableOnFormTags: true,
-      enabled: showSettingsShortcutEnabled
-    }
-  )
-
-  // Listen for navigate to About page event from macOS menu
+  // macOS 菜单的 "关于" 事件 — 设置面板已不存在，忽略
   useEffect(() => {
     const handleNavigateToAbout = () => {
-      navigate('/settings/about')
+      // No-op: settings panel removed
     }
 
     const removeListener = window.electron.ipcRenderer.on(IpcChannel.Windows_NavigateToAbout, handleNavigateToAbout)
@@ -38,7 +14,7 @@ const NavigationHandler: React.FC = () => {
     return () => {
       removeListener()
     }
-  }, [navigate])
+  }, [])
 
   return null
 }

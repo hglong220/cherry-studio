@@ -5553,5 +5553,8 @@
     "quit": "結束",
     "show_window": "顯示視窗",
     "visualization": "視覺化"
+  },
+  "pc_monitor": {
+    "title": "電腦控制台"
   }
 }

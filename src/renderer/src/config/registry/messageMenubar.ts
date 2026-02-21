@@ -22,26 +22,13 @@ export type MessageMenubarScopeConfig = {
 
 export const DEFAULT_MESSAGE_MENUBAR_SCOPE: MessageMenubarScope = TopicType.Chat
 
+// AIIRC: Gemini 风格，只保留复制按钮
 export const DEFAULT_MESSAGE_MENUBAR_BUTTON_IDS: MessageMenubarButtonId[] = [
-  'user-regenerate',
-  'user-edit',
-  'copy',
-  'assistant-regenerate',
-  'assistant-mention-model',
-  'translate',
-  'useful',
-  'notes',
-  'delete',
-  'trace',
-  'more-menu'
+  'copy'
 ]
 
 export const SESSION_MESSAGE_MENUBAR_BUTTON_IDS: MessageMenubarButtonId[] = [
-  'copy',
-  'translate',
-  'notes',
-  'delete',
-  'more-menu'
+  'copy'
 ]
 
 const messageMenubarRegistry = new Map<MessageMenubarScope, MessageMenubarScopeConfig>([

@@ -1,0 +1,375 @@
+/* ══════════════════════════════════════════════════════════════════════
+   AIIRC Studio 设计系统 v2.0
+   Design System — 对标 Linear · Cursor · Vercel · Apple HIG
+   所有视觉决策的唯一来源
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── 深色主题 — Apple HIG Dark Mode ────────────────────────────────── */
+:root {
+    /* 背景层级 — Apple systemBackground 三级 */
+    --bg-app: #000000;
+    --bg-sidebar: #1C1C1E;
+    --bg-panel: #1C1C1E;
+    --bg-surface: #2C2C2E;
+    --bg-elevated: #3A3A3C;
+    --bg-hover: rgba(255, 255, 255, 0.08);
+
+    /* 文字层级 — Apple labelColor */
+    --text-primary: rgba(255, 255, 255, 0.92);
+    --text-secondary: rgba(235, 235, 245, 0.60);
+    --text-muted: rgba(235, 235, 245, 0.30);
+    --text-disabled: rgba(235, 235, 245, 0.18);
+
+    /* 品牌色 */
+    --brand-primary: #6366F1;
+    --brand-hover: #818CF8;
+    --brand-subtle: rgba(99, 102, 241, 0.15);
+
+    /* 语义色 — Apple System Colors */
+    --aiirc-success: #30D158;
+    --aiirc-warning: #FFD60A;
+    --aiirc-error: #FF453A;
+    --aiirc-info: #0A84FF;
+
+    /* 边框 — Apple separator */
+    --border-subtle: rgba(84, 84, 88, 0.36);
+    --border-default: rgba(84, 84, 88, 0.55);
+    --border-strong: rgba(84, 84, 88, 0.80);
+
+    /* Agent 状态指示点 */
+    --dot-online: #30D158;
+    --dot-busy: #6366F1;
+    --dot-offline: #48484A;
+    --dot-error: #FF453A;
+
+    /* 间距系统（8px 网格） */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
+
+    /* 圆角 */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+
+    /* 阴影 */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+    /* 字体栈 */
+    --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+    /* 布局尺寸 */
+    --sidebar-width: 56px;
+    --right-panel-width: 260px;
+    --titlebar-height: 32px;
+    --statusbar-height: 28px;
+}
+
+/* ── 浅色主题 ──────────────────────────────────────────────────────── */
+[theme-mode='light'] {
+    /* 浅色布局背景分层：Sidebar (最暗) -> Panel/List (中等) -> Content (纯白) */
+    --bg-app: #FFFFFF;
+    /* 聊天主区域纯白 */
+    --bg-sidebar: #ECECF1;
+    /* 最左侧深灰白 */
+    --bg-panel: #F4F4F7;
+    /* 列表/右侧拉栏中灰白 */
+    --bg-surface: #FFFFFF;
+    /* 内容卡片/输入框 */
+    --bg-elevated: #FFFFFF;
+    /* 浮动面板 */
+    --bg-hover: rgba(0, 0, 0, 0.05);
+
+    --text-primary: #111111;
+    --text-secondary: #5E5E5E;
+    --text-muted: #8E8E93;
+    --text-disabled: #C7C7CC;
+
+    --brand-primary: #6366F1;
+    --brand-hover: #4F46E5;
+    --brand-subtle: #F2F2F7;
+
+    --border-subtle: #E5E5EA;
+    --border-default: #D1D1D6;
+    --border-strong: #C7C7CC;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* ── 右侧面板样式 ─────────────────────────────────────────────────── */
+.aiirc-right-panel {
+    width: var(--right-panel-width);
+    min-width: var(--right-panel-width);
+    background: var(--bg-panel);
+    border-left: 1px solid var(--border-subtle);
+    padding: var(--space-4) var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.aiirc-right-panel::-webkit-scrollbar {
+    display: none;
+}
+
+.aiirc-panel-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: var(--space-4) var(--space-1) var(--space-2);
+}
+
+.aiirc-panel-section-title:first-child {
+    padding-top: 0;
+}
+
+/* 状态行 */
+.aiirc-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px var(--space-1);
+    border-radius: var(--radius-md);
+    cursor: default;
+    transition: background 150ms;
+}
+
+.aiirc-status-row:hover {
+    background: var(--bg-hover);
+}
+
+.aiirc-status-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.aiirc-status-value {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* 状态指示点 */
+.aiirc-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.aiirc-dot.online {
+    background: var(--dot-online);
+    box-shadow: 0 0 6px var(--dot-online);
+}
+
+.aiirc-dot.busy {
+    background: var(--dot-busy);
+    box-shadow: 0 0 6px var(--dot-busy);
+}
+
+.aiirc-dot.offline {
+    background: var(--dot-offline);
+}
+
+.aiirc-dot.error {
+    background: var(--dot-error);
+    box-shadow: 0 0 6px var(--dot-error);
+}
+
+/* Agent 格子网格 */
+.aiirc-agent-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-1);
+}
+
+.aiirc-agent-cell {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    transition: transform 150ms;
+    cursor: default;
+}
+
+.aiirc-agent-cell:hover {
+    transform: scale(1.4);
+}
+
+.aiirc-agent-cell.online {
+    background: var(--dot-online);
+}
+
+.aiirc-agent-cell.busy {
+    background: var(--dot-busy);
+}
+
+.aiirc-agent-cell.offline {
+    background: var(--bg-elevated);
+}
+
+/* 进度条 */
+.aiirc-progress-bar {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--bg-elevated);
+    overflow: hidden;
+    margin: 2px 0;
+}
+
+.aiirc-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 400ms ease;
+}
+
+/* 升级入口（克制设计） */
+.aiirc-upgrade-hint {
+    margin-top: auto;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-subtle);
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.aiirc-upgrade-link {
+    font-size: 12px;
+    color: var(--brand-primary);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font-weight: 500;
+    transition: opacity 150ms;
+}
+
+.aiirc-upgrade-link:hover {
+    opacity: 0.8;
+}
+
+/* ── 底部状态栏 ───────────────────────────────────────────────────── */
+.aiirc-statusbar {
+    height: var(--statusbar-height);
+    background: var(--bg-app);
+    border-top: 1px solid var(--border-subtle);
+    padding: 0 var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+}
+
+.aiirc-statusbar-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 100%;
+    padding: 0 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 150ms, background 150ms;
+    border: none;
+    background: none;
+}
+
+.aiirc-statusbar-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.aiirc-statusbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.aiirc-statusbar-btn.active {
+    color: var(--brand-primary);
+    background: var(--brand-subtle);
+}
+
+/* ── 探索模式状态条 ───────────────────────────────────────────────── */
+.aiirc-explore-bar {
+    height: 36px;
+    background: var(--brand-subtle);
+    border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--space-4);
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.aiirc-explore-bar .label {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.aiirc-explore-bar .meta {
+    color: var(--text-muted);
+}
+
+/* ── 骨架屏 ───────────────────────────────────────────────────────── */
+.aiirc-skeleton {
+    background: linear-gradient(90deg,
+            var(--bg-elevated) 25%,
+            var(--bg-hover) 50%,
+            var(--bg-elevated) 75%);
+    background-size: 200% 100%;
+    animation: aiirc-shimmer 1.5s infinite;
+    border-radius: var(--radius-sm);
+}
+
+@keyframes aiirc-shimmer {
+    to {
+        background-position: -200% 0;
+    }
+}
+
+/* 探索图标旋转 */
+.aiirc-icon-spinning {
+    animation: aiirc-orbit 2s linear infinite;
+}
+
+@keyframes aiirc-orbit {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── 动效规范 ─────────────────────────────────────────────────────── */
+/* 80ms  → 按钮按下 */
+/* 150ms → hover 状态变化 */
+/* 200ms → Modal / Toast 进场 */
+/* 250ms → 页面内容切换 */
+/* 400ms → 数据加载后内容出现 */

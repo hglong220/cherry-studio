@@ -1,6 +1,12 @@
 import { loggerService } from '@logger'
 import { isLinux, isMac, isWin } from '@main/constant'
-import ElectronShutdownHandler from '@paymoapp/electron-shutdown-handler'
+// @paymoapp/electron-shutdown-handler 需要原生编译，可能不可用
+let ElectronShutdownHandler: any = null
+try {
+  ElectronShutdownHandler = require('@paymoapp/electron-shutdown-handler')
+} catch {
+  // 原生模块未编译，Windows 关机处理将降级
+}
 import { BrowserWindow } from 'electron'
 import { powerMonitor } from 'electron'
 
@@ -70,6 +76,11 @@ export class PowerMonitorService {
    * Initialize shutdown handler for Windows using @paymoapp/electron-shutdown-handler
    */
   private initWindowsShutdownHandler(): void {
+    if (!ElectronShutdownHandler) {
+      logger.warn('Windows shutdown handler native module not available, falling back to powerMonitor')
+      this.initElectronPowerMonitor()
+      return
+    }
     try {
       const zeroMemoryWindow = new BrowserWindow({ show: false })
       // Set the window handle for the shutdown handler

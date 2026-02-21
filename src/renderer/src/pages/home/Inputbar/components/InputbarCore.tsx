@@ -3,7 +3,7 @@ import { loggerService } from '@logger'
 import { ActionIconButton } from '@renderer/components/Buttons'
 import type { QuickPanelTriggerInfo } from '@renderer/components/QuickPanel'
 import { QuickPanelReservedSymbol, QuickPanelView, useQuickPanel } from '@renderer/components/QuickPanel'
-import TranslateButton from '@renderer/components/TranslateButton'
+// AIIRC: TranslateButton removed, replaced with voice input
 import { useRuntime } from '@renderer/hooks/useRuntime'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { useTimer } from '@renderer/hooks/useTimer'
@@ -20,7 +20,7 @@ import { IpcChannel } from '@shared/IpcChannel'
 import { Tooltip } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
 import type { TextAreaRef } from 'antd/lib/input/TextArea'
-import { CirclePause, Languages } from 'lucide-react'
+import { CirclePause, Languages, Mic } from 'lucide-react'
 import type { CSSProperties, FC } from 'react'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -452,13 +452,6 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
     [setText, textareaRef, quickPanelTriggersEnabled, config.enableQuickPanel, quickPanel, triggers]
   )
 
-  const onTranslated = useCallback(
-    (translatedText: string) => {
-      setText(translatedText)
-      setTimeoutTimer('onTranslated', () => resizeTextArea(), 0)
-    },
-    [resizeTextArea, setText, setTimeoutTimer]
-  )
 
   const appendTxtContentToInput = useCallback(
     async (file: FileMetadata, event: React.MouseEvent<HTMLDivElement>) => {
@@ -604,9 +597,72 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
     }
   }, [])
 
+  // AIIRC: 语音输入
+  const [isRecording, setIsRecording] = useState(false)
+  const recognitionRef = useRef<any>(null)
+
+  const handleVoiceInput = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      window.toast?.error('浏览器不支持语音输入')
+      return
+    }
+
+    if (isRecording && recognitionRef.current) {
+      recognitionRef.current.stop()
+      setIsRecording(false)
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'zh-CN'
+    recognition.interimResults = true
+    recognition.continuous = true
+    recognitionRef.current = recognition
+
+    recognition.onresult = (event: any) => {
+      let finalTranscript = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript
+        }
+      }
+      if (finalTranscript) {
+        setText((prev: string) => prev + finalTranscript)
+        setTimeoutTimer('voiceResize', () => resizeTextArea(), 0)
+      }
+    }
+
+    recognition.onerror = () => {
+      setIsRecording(false)
+    }
+
+    recognition.onend = () => {
+      setIsRecording(false)
+    }
+
+    recognition.start()
+    setIsRecording(true)
+  }, [isRecording, setText, setTimeoutTimer, resizeTextArea])
+
   const rightSectionExtras = useMemo(() => {
     const extras: React.ReactNode[] = []
-    extras.push(<TranslateButton key="translate" text={text} onTranslated={onTranslated} isLoading={isTranslating} />)
+
+    // 语音输入按钮
+    extras.push(
+      <Tooltip key="voice" placement="top" title={isRecording ? '停止录音' : '语音输入'} mouseLeaveDelay={0} arrow>
+        <ActionIconButton onClick={handleVoiceInput}>
+          <Mic
+            size={20}
+            color={isRecording ? 'var(--color-error)' : undefined}
+            style={{
+              animation: isRecording ? 'pulse 1.5s ease-in-out infinite' : 'none'
+            }}
+          />
+        </ActionIconButton>
+      </Tooltip>
+    )
+
     extras.push(<SendMessageButton sendMessage={handleSendMessage} disabled={isSendDisabled} />)
 
     if (isLoading) {
@@ -620,7 +676,7 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
     }
 
     return <>{extras}</>
-  }, [text, onTranslated, isTranslating, handleSendMessage, isSendDisabled, isLoading, t, onPause])
+  }, [handleVoiceInput, isRecording, handleSendMessage, isSendDisabled, isLoading, t, onPause])
 
   const quickPanelElement = config.enableQuickPanel ? <QuickPanelView setInputText={setText} /> : null
 
@@ -716,22 +772,34 @@ const Container = styled.div`
   flex-direction: column;
   position: relative;
   z-index: 2;
-  padding: 0 18px 18px 18px;
+  padding: 0 20px 20px 20px;
   [navbar-position='top'] & {
-    padding: 0 18px 10px 18px;
+    padding: 0 20px 12px 20px;
   }
 `
 
 const InputBarContainer = styled.div`
-  border: 0.5px solid var(--color-border);
-  transition: all 0.2s ease;
+  border: 0.5px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
   position: relative;
-  border-radius: 17px;
+  border-radius: 24px;
   padding-top: 8px;
-  background-color: var(--color-background-opacity);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+
+  &:hover {
+    border-color: var(--border-default);
+  }
+
+  &:focus-within {
+    border-color: var(--brand-hover);
+    box-shadow: var(--shadow-md);
+  }
 
   &.file-dragging {
-    border: 2px dashed #2ecc71;
+    border-color: var(--brand-primary);
+    background-color: var(--brand-subtle);
 
     &::before {
       content: '';
@@ -741,7 +809,7 @@ const InputBarContainer = styled.div`
       right: 0;
       bottom: 0;
       background-color: rgba(46, 204, 113, 0.03);
-      border-radius: 14px;
+      border-radius: 24px;
       z-index: 5;
       pointer-events: none;
     }
@@ -769,8 +837,8 @@ const BottomBar = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding: 5px 8px;
-  height: 40px;
+  padding: 4px 10px;
+  height: 42px;
   gap: 16px;
   position: relative;
   z-index: 2;

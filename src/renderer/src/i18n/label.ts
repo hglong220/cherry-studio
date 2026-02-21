@@ -146,6 +146,7 @@ const titleKeyMap = {
   memories: 'title.memories',
   notes: 'title.notes',
   paintings: 'title.paintings',
+  'pc-monitor': 'pc_monitor.title',
   settings: 'title.settings',
   translate: 'title.translate',
   openclaw: 'openclaw.title'
@@ -179,6 +180,7 @@ export const getThemeModeLabel = (key: string): string => {
 
 const sidebarIconKeyMap = {
   assistants: 'assistants.title',
+  pc_monitor: 'pc_monitor.title',
   store: 'assistants.presets.title',
   paintings: 'paintings.title',
   translate: 'translate.title',

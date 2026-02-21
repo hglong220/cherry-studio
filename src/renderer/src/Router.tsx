@@ -1,69 +1,129 @@
+/**
+ * AIIRC Studio — App Shell
+ *
+ * 布局策略（对标 Manus / ChatGPT / Claude.ai）：
+ *
+ * ┌────────┬──────────────────────────────────────────┐
+ * │SIDEBAR │  MAIN CONTENT (full width)               │
+ * │ 56px   │                                          │
+ * │        │  ┌─ Header ──────────────────────────┐   │
+ * │ [Chat] │  │ ● GPT-4o ▾          [面板] [⚡]  │   │
+ * │ [PCs]  │  ├───────────────────────────────────┤   │
+ * │ [Expl] │  │                                   │   │
+ * │  ---   │  │     Chat / PC Monitor / etc       │   │
+ * │ [Set]  │  │     (centered, max-w: 720px)      │   │
+ * │ [Moon] │  │                                   │   │
+ * │        │  ├───────────────────────────────────┤   │
+ * │        │  │  [Input area]                     │   │
+ * │        │  └───────────────────────────────────┘   │
+ * └────────┴──────────────────────────────────────────┘
+ *
+ * 右侧面板按需滑出（点击 Header 的面板图标）
+ * 没有底部状态栏 — 状态信息集成到 Header
+ */
 import '@renderer/databases'
 
 import type { FC } from 'react'
-import { useMemo } from 'react'
+import { useState } from 'react'
 import { HashRouter, Route, Routes } from 'react-router-dom'
+import styled from 'styled-components'
 
+import RightPanel from './components/app/RightPanel'
 import Sidebar from './components/app/Sidebar'
+import TitleBar from './components/app/TitleBar'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import TabsContainer from './components/Tab/TabContainer'
 import NavigationHandler from './handler/NavigationHandler'
-import { useNavbarPosition } from './hooks/useSettings'
-import CodeToolsPage from './pages/code/CodeToolsPage'
-import FilesPage from './pages/files/FilesPage'
 import HomePage from './pages/home/HomePage'
-import KnowledgePage from './pages/knowledge/KnowledgePage'
-import LaunchpadPage from './pages/launchpad/LaunchpadPage'
-import MinAppPage from './pages/minapps/MinAppPage'
-import MinAppsPage from './pages/minapps/MinAppsPage'
-import NotesPage from './pages/notes/NotesPage'
-import OpenClawPage from './pages/openclaw/OpenClawPage'
-import PaintingsRoutePage from './pages/paintings/PaintingsRoutePage'
-import SettingsPage from './pages/settings/SettingsPage'
-import AssistantPresetsPage from './pages/store/assistants/presets/AssistantPresetsPage'
-import TranslatePage from './pages/translate/TranslatePage'
 
-const Router: FC = () => {
-  const { navbarPosition } = useNavbarPosition()
 
-  const routes = useMemo(() => {
-    return (
-      <ErrorBoundary>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/store" element={<AssistantPresetsPage />} />
-          <Route path="/paintings/*" element={<PaintingsRoutePage />} />
-          <Route path="/translate" element={<TranslatePage />} />
-          <Route path="/files" element={<FilesPage />} />
-          <Route path="/notes" element={<NotesPage />} />
-          <Route path="/knowledge" element={<KnowledgePage />} />
-          <Route path="/apps/:appId" element={<MinAppPage />} />
-          <Route path="/apps" element={<MinAppsPage />} />
-          <Route path="/code" element={<CodeToolsPage />} />
-          <Route path="/openclaw" element={<OpenClawPage />} />
-          <Route path="/settings/*" element={<SettingsPage />} />
-          <Route path="/launchpad" element={<LaunchpadPage />} />
-        </Routes>
-      </ErrorBoundary>
-    )
-  }, [])
-
-  if (navbarPosition === 'left') {
-    return (
-      <HashRouter>
-        <Sidebar />
-        {routes}
-        <NavigationHandler />
-      </HashRouter>
-    )
-  }
+const AppShell: FC = () => {
+  const [panelOpen, setPanelOpen] = useState(false)
 
   return (
-    <HashRouter>
+    <ShellContainer>
+      <TitleBar />
+      <BodyRow>
+        <Sidebar onPanelToggle={() => setPanelOpen((p) => !p)} />
+        <MainArea>
+          <MainContent>
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+
+              </Routes>
+            </ErrorBoundary>
+          </MainContent>
+          {/* 面板按需滑出 */}
+          {panelOpen && (
+            <PanelSlider>
+              <RightPanel />
+            </PanelSlider>
+          )}
+        </MainArea>
+      </BodyRow>
       <NavigationHandler />
-      <TabsContainer>{routes}</TabsContainer>
+    </ShellContainer>
+  )
+}
+
+const Router: FC = () => {
+  return (
+    <HashRouter>
+      <AppShell />
     </HashRouter>
   )
 }
+
+/* ── Styled Components ─────────────────────────────────────────── */
+
+const ShellContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  background: var(--bg-app);
+  font-family: var(--font-sans);
+`
+
+const BodyRow = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+`
+
+const MainArea = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+  position: relative;
+`
+
+const MainContent = styled.div`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`
+
+const PanelSlider = styled.div`
+  width: 220px;
+  min-width: 220px;
+  animation: slideInPanel 200ms cubic-bezier(0.2, 0, 0, 1);
+  border-left: 0.5px solid var(--border-subtle);
+
+  @keyframes slideInPanel {
+    from {
+      transform: translateX(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+`
 
 export default Router

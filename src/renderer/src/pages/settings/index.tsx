@@ -8,7 +8,7 @@ export const SettingContainer = styled.div<{ theme?: ThemeMode }>`
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 15px 18px;
+  padding: 12px 16px;
   overflow-y: scroll;
   background: ${(props) => (props.theme === 'dark' ? 'transparent' : 'var(--color-background-soft)')};
 
@@ -23,16 +23,16 @@ export const SettingTitle = styled.div`
   justify-content: space-between;
   align-items: center;
   user-select: none;
-  font-size: 14px;
-  font-weight: bold;
+  font-size: 13px;
+  font-weight: 600;
 `
 
 export const SettingSubtitle = styled.div`
-  font-size: 14px;
-  color: var(--color-text-1);
-  margin: 15px 0 0 0;
+  font-size: 12px;
+  color: var(--color-text-2);
+  margin: 10px 0 0 0;
   user-select: none;
-  font-weight: bold;
+  font-weight: 500;
 `
 
 export const SettingDescription = styled.div`
@@ -55,7 +55,7 @@ export const SettingRow = styled.div`
 `
 
 export const SettingRowTitle = styled.div`
-  font-size: 14px;
+  font-size: 13px;
   line-height: 18px;
   color: var(--color-text-1);
   display: flex;
@@ -82,9 +82,9 @@ export const SettingHelpLink = styled(Link)`
 `
 
 export const SettingGroup = styled.div<{ theme?: ThemeMode; css?: CSSProp }>`
-  margin-bottom: 20px;
-  border-radius: var(--list-item-border-radius);
+  margin-bottom: 16px;
+  border-radius: 10px;
   border: 0.5px solid var(--color-border);
-  padding: 16px;
+  padding: 12px;
   background: ${(props) => (props.theme === 'dark' ? '#00000010' : 'var(--color-background)')};
 `

@@ -19,9 +19,11 @@ import { useTheme } from './ThemeProvider'
 const AntdProvider: FC<PropsWithChildren> = ({ children }) => {
   const {
     language,
-    userTheme: { colorPrimary }
+    userTheme: { colorPrimary: rawColorPrimary }
   } = useSettings()
   const { theme: _theme } = useTheme()
+
+  const colorPrimary = rawColorPrimary === '#00b96b' ? '#6366F1' : rawColorPrimary
 
   return (
     <ConfigProvider

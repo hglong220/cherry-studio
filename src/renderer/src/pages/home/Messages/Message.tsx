@@ -265,15 +265,15 @@ const MessageContainer = styled.div`
   flex-direction: column;
   width: 100%;
   position: relative;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1);
   transform: translateZ(0);
   will-change: transform;
-  padding: 10px;
+  padding: 8px 12px;
   padding-bottom: 0;
-  border-radius: 10px;
+  border-radius: 12px;
   .menubar {
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
     transform: translateZ(0);
     will-change: opacity;
     &.show {
@@ -289,7 +289,7 @@ const MessageContainer = styled.div`
 
 const MessageContentContainer = styled(Scrollbar)`
   max-width: 100%;
-  padding-left: 46px;
+  padding-left: 0;
   margin-top: 0;
   overflow-y: auto;
 `
@@ -299,8 +299,8 @@ const MessageFooter = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-left: 46px;
-  margin-top: 3px;
+  margin-left: 0;
+  margin-top: 4px;
 `
 
 const NewContextMessage = styled.div<{ isMultiSelectMode: boolean }>`

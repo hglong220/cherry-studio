@@ -271,13 +271,13 @@ const MessageMenubar: FC<Props> = (props) => {
     const items: MenuProps['items'] = [
       ...(isEditable
         ? [
-            {
-              label: t('common.edit'),
-              key: 'edit',
-              icon: <FilePenLine size={15} />,
-              onClick: onEdit
-            }
-          ]
+          {
+            label: t('common.edit'),
+            key: 'edit',
+            icon: <FilePenLine size={15} />,
+            onClick: onEdit
+          }
+        ]
         : []),
       {
         label: t('chat.message.new.branch.label'),
@@ -560,7 +560,7 @@ const MessageMenubar: FC<Props> = (props) => {
 
   return (
     <>
-      {showMessageTokens && <MessageTokens message={message} />}
+      {/* AIIRC: Gemini 风格，不显示 token 数 */}
       <MenusBar
         className={classNames({ menubar: true, show: isLastMessage, 'user-bubble-style': isUserBubbleStyleMessage })}>
         {buttonIds.map((buttonId) => {
@@ -604,7 +604,7 @@ const ActionButton = styled.div<{ $softHoverBg?: boolean }>`
   transition: all 0.2s ease;
   &:hover {
     background-color: ${(props) =>
-      props.$softHoverBg ? 'var(--color-background-soft)' : 'var(--color-background-mute)'};
+    props.$softHoverBg ? 'var(--color-background-soft)' : 'var(--color-background-mute)'};
     color: var(--color-text-1);
     .anticon,
     .lucide {
@@ -761,50 +761,50 @@ const buttonRenderers: Record<MessageMenubarButtonId, MessageMenubarButtonRender
       })),
       ...(hasTranslationBlocks
         ? [
-            { type: 'divider' as const },
-            {
-              label: '📋 ' + t('common.copy'),
-              key: 'translate-copy',
-              onClick: () => {
-                const translationBlocks = message.blocks
-                  .map((blockId) => blockEntities[blockId])
-                  .filter((block) => block?.type === 'translation')
+          { type: 'divider' as const },
+          {
+            label: '📋 ' + t('common.copy'),
+            key: 'translate-copy',
+            onClick: () => {
+              const translationBlocks = message.blocks
+                .map((blockId) => blockEntities[blockId])
+                .filter((block) => block?.type === 'translation')
 
-                if (translationBlocks.length > 0) {
-                  const translationContent = translationBlocks
-                    .map((block) => block?.content || '')
-                    .join('\n\n')
-                    .trim()
+              if (translationBlocks.length > 0) {
+                const translationContent = translationBlocks
+                  .map((block) => block?.content || '')
+                  .join('\n\n')
+                  .trim()
 
-                  if (translationContent) {
-                    navigator.clipboard.writeText(translationContent)
-                    window.toast.success(t('translate.copied'))
-                  } else {
-                    window.toast.warning(t('translate.empty'))
-                  }
-                }
-              }
-            },
-            {
-              label: '✖ ' + t('translate.close'),
-              key: 'translate-close',
-              onClick: () => {
-                const translationBlocks = message.blocks
-                  .map((blockId) => blockEntities[blockId])
-                  .filter((block) => block?.type === 'translation')
-                  .map((block) => block?.id)
-
-                if (translationBlocks.length > 0) {
-                  translationBlocks.forEach((blockId) => {
-                    if (blockId) {
-                      removeMessageBlock(message.id, blockId)
-                    }
-                  })
-                  window.toast.success(t('translate.closed'))
+                if (translationContent) {
+                  navigator.clipboard.writeText(translationContent)
+                  window.toast.success(t('translate.copied'))
+                } else {
+                  window.toast.warning(t('translate.empty'))
                 }
               }
             }
-          ]
+          },
+          {
+            label: '✖ ' + t('translate.close'),
+            key: 'translate-close',
+            onClick: () => {
+              const translationBlocks = message.blocks
+                .map((blockId) => blockEntities[blockId])
+                .filter((block) => block?.type === 'translation')
+                .map((block) => block?.id)
+
+              if (translationBlocks.length > 0) {
+                translationBlocks.forEach((blockId) => {
+                  if (blockId) {
+                    removeMessageBlock(message.id, blockId)
+                  }
+                })
+                window.toast.success(t('translate.closed'))
+              }
+            }
+          }
+        ]
         : [])
     ]
 

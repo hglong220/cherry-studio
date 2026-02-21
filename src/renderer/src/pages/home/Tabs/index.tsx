@@ -1,19 +1,14 @@
-import AddAssistantPopup from '@renderer/components/Popups/AddAssistantPopup'
-import { useAssistants, useDefaultAssistant } from '@renderer/hooks/useAssistant'
 import { useNavbarPosition, useSettings } from '@renderer/hooks/useSettings'
 import { useShowTopics } from '@renderer/hooks/useStore'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
-import { useAppDispatch } from '@renderer/store'
-import { setActiveAgentId, setActiveTopicOrSessionAction } from '@renderer/store/runtime'
 import type { Assistant, Topic } from '@renderer/types'
 import type { Tab } from '@renderer/types/chat'
-import { classNames, uuid } from '@renderer/utils'
+import { classNames } from '@renderer/utils'
+import { Tooltip } from 'antd'
 import type { FC } from 'react'
-import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useCallback, useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-import Assistants from './AssistantsTab'
 import Topics from './TopicsTab'
 
 interface Props {
@@ -31,49 +26,26 @@ let _tab: Tab | null = null
 const HomeTabs: FC<Props> = ({
   activeAssistant,
   activeTopic,
-  setActiveAssistant,
   setActiveTopic,
   position,
   forceToSeeAllTab,
   style
 }) => {
-  const { addAssistant } = useAssistants()
   const { topicPosition } = useSettings()
-  const { defaultAssistant } = useDefaultAssistant()
   const { toggleShowTopics } = useShowTopics()
   const { isLeftNavbar } = useNavbarPosition()
-  const { t } = useTranslation()
-  const dispatch = useAppDispatch()
-
   const [tab, setTab] = useState<Tab>(position === 'left' ? _tab || 'assistants' : 'topic')
-  const borderStyle = '0.5px solid var(--color-border)'
+
   const border =
     position === 'left'
-      ? { borderRight: isLeftNavbar ? borderStyle : 'none' }
-      : { borderLeft: isLeftNavbar ? borderStyle : 'none', borderTopLeftRadius: 0 }
+      ? { borderRight: '0.5px solid var(--color-border)' }
+      : { borderLeft: '0.5px solid var(--color-border)', borderTopLeftRadius: 0 }
 
   if (position === 'left' && topicPosition === 'left') {
     _tab = tab
   }
 
   const showTab = position === 'left' && topicPosition === 'left'
-
-  const onCreateAssistant = async () => {
-    const assistant = await AddAssistantPopup.show()
-    if (assistant) {
-      setActiveAssistant(assistant)
-      dispatch(setActiveAgentId(null))
-      dispatch(setActiveTopicOrSessionAction('topic'))
-    }
-  }
-
-  const onCreateDefaultAssistant = () => {
-    const assistant = { ...defaultAssistant, id: uuid() }
-    addAssistant(assistant)
-    setActiveAssistant(assistant)
-    dispatch(setActiveAgentId(null))
-    dispatch(setActiveTopicOrSessionAction('topic'))
-  }
 
   useEffect(() => {
     const unsubscribes = [
@@ -106,38 +78,112 @@ const HomeTabs: FC<Props> = ({
     <Container
       style={{ ...border, ...style }}
       className={classNames('home-tabs', { right: position === 'right' && topicPosition === 'right' })}>
-      {position === 'left' && topicPosition === 'left' && (
-        <CustomTabs>
-          <TabItem active={tab === 'assistants'} onClick={() => setTab('assistants')}>
-            {t('assistants.abbr')}
-          </TabItem>
-          <TabItem active={tab === 'topic'} onClick={() => setTab('topic')}>
-            {t('common.topics')}
-          </TabItem>
-        </CustomTabs>
-      )}
-
       <TabContent className="home-tabs-content">
-        {tab === 'assistants' && (
-          <Assistants
-            activeAssistant={activeAssistant}
-            setActiveAssistant={setActiveAssistant}
-            onCreateAssistant={onCreateAssistant}
-            onCreateDefaultAssistant={onCreateDefaultAssistant}
-          />
-        )}
-        {tab === 'topic' && (
-          <Topics
-            assistant={activeAssistant}
-            activeTopic={activeTopic}
-            setActiveTopic={setActiveTopic}
-            position={position}
-          />
-        )}
+        <Topics
+          assistant={activeAssistant}
+          activeTopic={activeTopic}
+          setActiveTopic={setActiveTopic}
+          position={position}
+        />
       </TabContent>
+      {position === 'left' && <MiniStatusFooter />}
     </Container>
   )
 }
+
+/* ── 精简状态栏（Apple HIG 风格）── */
+interface AgentMini { id: string; status: 'online' | 'busy' | 'offline' }
+
+const MiniStatusFooter: FC = () => {
+  const [connected, setConnected] = useState(false)
+  const [model, setModel] = useState('--')
+  const [tokens, setTokens] = useState('--')
+  const [exploreActive, setExploreActive] = useState(false)
+  const [agents, setAgents] = useState<AgentMini[]>(
+    Array.from({ length: 20 }, (_, i) => ({ id: `agent-${i + 1}`, status: 'offline' as const }))
+  )
+
+  const poll = useCallback(async () => {
+    try {
+      const h = await fetch('http://localhost:3022/health', { signal: AbortSignal.timeout(3000) })
+      setConnected(h.ok)
+      if (h.ok) {
+        try {
+          const mr = await fetch('http://localhost:3022/v1/models', { signal: AbortSignal.timeout(3000) })
+          if (mr.ok) { const d = await mr.json(); setModel(d?.data?.[0]?.id || 'GPT-4o') }
+        } catch { /* */ }
+        try {
+          const tr = await fetch('http://localhost:3022/api/usage', { signal: AbortSignal.timeout(3000) })
+          if (tr.ok) {
+            const d = await tr.json()
+            const t = d?.today?.totalTokens || d?.totalTokens || 0
+            setTokens(t > 1000 ? `${(t / 1000).toFixed(1)}k` : String(t))
+          }
+        } catch { /* */ }
+      } else {
+        setModel('--')
+        setTokens('--')
+      }
+    } catch {
+      setConnected(false)
+      setModel('--')
+      setTokens('--')
+    }
+
+    const checks: Promise<AgentMini>[] = []
+    for (let i = 1; i <= 6; i++) {
+      const port = i === 1 ? 3011 : 4010 + i
+      checks.push(
+        fetch(`http://localhost:${port}/health`, { signal: AbortSignal.timeout(1500) })
+          .then(r => ({ id: `agent-${i}`, status: (r.ok ? 'online' : 'offline') as 'online' | 'offline' }))
+          .catch(() => ({ id: `agent-${i}`, status: 'offline' as const }))
+      )
+    }
+    const results = await Promise.all(checks)
+    setAgents(results.concat(
+      Array.from({ length: 14 }, (_, i) => ({ id: `agent-${i + 7}`, status: 'offline' as const }))
+    ))
+  }, [])
+
+  useEffect(() => {
+    poll()
+    const t = setInterval(poll, 15000)
+    return () => clearInterval(t)
+  }, [poll])
+
+  useEffect(() => {
+    const handler = ((e: CustomEvent) => setExploreActive(e.detail)) as EventListener
+    window.addEventListener('explore-mode-change', handler)
+    return () => window.removeEventListener('explore-mode-change', handler)
+  }, [])
+
+  const onlineCount = agents.filter(a => a.status === 'online' || a.status === 'busy').length
+
+  return (
+    <StatusFooter>
+      <StatusLine>
+        <StatusDot $on={connected} />
+        <StatusText>{connected ? '已连接' : '离线'}</StatusText>
+        <StatusSep />
+        <ModelText>{model}</ModelText>
+      </StatusLine>
+      <InfoLine>
+        <InfoItem>⚡ {tokens}</InfoItem>
+        {exploreActive && <ExploreTag>🔭 探索中</ExploreTag>}
+      </InfoLine>
+      <AgentGrid>
+        {agents.map(a => (
+          <Tooltip key={a.id} title={`${a.id} · ${a.status === 'online' ? '空闲' : '离线'}`} placement="top" mouseEnterDelay={0.4}>
+            <AgentCell $status={a.status} />
+          </Tooltip>
+        ))}
+      </AgentGrid>
+      <AgentSummary>{onlineCount} 在线 · {20 - onlineCount} 离线</AgentSummary>
+    </StatusFooter>
+  )
+}
+
+/* ── Styled Components ── */
 
 const Container = styled.div`
   display: flex;
@@ -146,14 +192,12 @@ const Container = styled.div`
   transition: width 0.3s;
   height: calc(100vh - var(--navbar-height));
   position: relative;
+  background-color: var(--color-background-soft);
 
   &.right {
     height: calc(100vh - var(--navbar-height));
   }
 
-  [navbar-position='left'] & {
-    background-color: var(--color-background);
-  }
   [navbar-position='top'] & {
     height: calc(100vh - var(--navbar-height));
   }
@@ -173,59 +217,102 @@ const TabContent = styled.div`
   overflow-x: hidden;
 `
 
-const CustomTabs = styled.div`
-  display: flex;
-  margin: 0 12px;
-  padding: 6px 0;
-  border-bottom: 1px solid var(--color-border);
-  background: transparent;
-  -webkit-app-region: no-drag;
-  [navbar-position='top'] & {
-    padding-top: 2px;
-  }
+/* ── Apple HIG 状态栏 ── */
+const StatusFooter = styled.div`
+  flex-shrink: 0;
+  padding: 10px 14px 10px;
+  border-top: 0.5px solid var(--color-border);
 `
 
-const TabItem = styled.button<{ active: boolean }>`
-  flex: 1;
-  height: 30px;
-  border: none;
-  background: transparent;
-  color: ${(props) => (props.active ? 'var(--color-text)' : 'var(--color-text-secondary)')};
-  font-size: 13px;
-  font-weight: ${(props) => (props.active ? '600' : '400')};
-  cursor: pointer;
-  border-radius: 8px;
-  margin: 0 2px;
-  position: relative;
+const StatusLine = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 5px;
+  margin-bottom: 8px;
+`
 
-  &:hover {
-    color: var(--color-text);
-  }
+const StatusText = styled.span`
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-2);
+  letter-spacing: -0.01em;
+`
 
-  &:active {
-    transform: scale(0.98);
-  }
+const ModelText = styled.span`
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--color-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+`
 
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: ${(props) => (props.active ? '30px' : '0')};
-    height: 3px;
-    background: var(--color-primary);
-    border-radius: 1px;
-    transition: all 0.2s ease;
-  }
+const StatusSep = styled.span`
+  width: 1px;
+  height: 10px;
+  background: var(--color-border);
+  flex-shrink: 0;
+`
 
-  &:hover::after {
-    width: ${(props) => (props.active ? '30px' : '16px')};
-    background: ${(props) => (props.active ? 'var(--color-primary)' : 'var(--color-primary-soft)')};
-  }
+const StatusDot = styled.span<{ $on: boolean }>`
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: ${({ $on }) => $on ? '#34c759' : '#ff3b30'};
+  ${({ $on }) => $on && 'box-shadow: 0 0 3px rgba(52, 199, 89, 0.5);'}
+`
+
+const AgentGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+  padding: 0 4px;
+  justify-items: center;
+`
+
+const AgentCell = styled.span<{ $status: string }>`
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: ${({ $status }) =>
+    $status === 'online' ? '#34c759' :
+      $status === 'busy' ? '#ff9500' :
+        'var(--color-border)'};
+  opacity: ${({ $status }) => $status === 'offline' ? 0.3 : 1};
+  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+`
+
+const InfoLine = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+`
+
+const InfoItem = styled.span`
+  font-size: 10px;
+  color: var(--color-text-3);
+`
+
+const ExploreTag = styled.span`
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--color-primary, #6366F1);
+  background: rgba(99, 102, 241, 0.08);
+  padding: 1px 5px;
+  border-radius: 3px;
+`
+
+const AgentSummary = styled.div`
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--color-text-3);
+  text-align: center;
+  margin-top: 5px;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
 `
 
 export default HomeTabs

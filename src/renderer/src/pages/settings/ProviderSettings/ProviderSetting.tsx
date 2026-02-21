@@ -408,6 +408,7 @@ const ProviderSetting: FC<Props> = ({ providerId }) => {
 
   const isAnthropicOAuth = () => provider.id === 'anthropic' && provider.authType === 'oauth'
 
+  // AIIRC: 极简风格 - 只显示名称、开关、API Key
   return (
     <SettingContainer theme={theme} style={{ background: 'var(--color-background)' }}>
       <SettingTitle>
@@ -417,16 +418,6 @@ const ProviderSetting: FC<Props> = ({ providerId }) => {
             <Link target="_blank" href={providerConfig.websites.official} style={{ display: 'flex' }}>
               <Button type="text" size="small" icon={<SquareArrowOutUpRight size={14} />} />
             </Link>
-          )}
-          {(!isSystemProvider(provider) || isSupportAnthropicPromptCacheProvider(provider)) && (
-            <Tooltip title={t('settings.provider.api.options.label')}>
-              <Button
-                type="text"
-                icon={<Bolt size={14} />}
-                size="small"
-                onClick={() => ApiOptionsSettingsPopup.show({ providerId: provider.id })}
-              />
-            </Tooltip>
           )}
         </Flex>
         <Switch
@@ -441,200 +432,60 @@ const ProviderSetting: FC<Props> = ({ providerId }) => {
         />
       </SettingTitle>
       <Divider style={{ width: '100%', margin: '10px 0' }} />
-      {isProviderSupportAuth(provider) && <ProviderOAuth providerId={provider.id} />}
       {isCherryIN && <CherryINOAuth providerId={provider.id} />}
-      {provider.id === 'openai' && <OpenAIAlert />}
-      {provider.id === 'ovms' && <OVMSSettings />}
-      {isDmxapi && <DMXAPISettings providerId={provider.id} />}
-      {provider.id === 'anthropic' && (
+      {!hideApiInput && !isAnthropicOAuth() && !hideApiKeyInput && (
         <>
-          <SettingSubtitle style={{ marginTop: 5 }}>{t('settings.provider.anthropic.auth_method')}</SettingSubtitle>
-          <Select
-            style={{ width: '40%', marginTop: 5, marginBottom: 10 }}
-            value={provider.authType || 'apiKey'}
-            onChange={(value) => updateProvider({ authType: value })}
-            options={[
-              { value: 'apiKey', label: t('settings.provider.anthropic.apikey') },
-              { value: 'oauth', label: t('settings.provider.anthropic.oauth') }
-            ]}
-          />
-          {provider.authType === 'oauth' && <AnthropicSettings />}
-        </>
-      )}
-      {!hideApiInput && !isAnthropicOAuth() && (
-        <>
-          {!hideApiKeyInput && (
-            <>
-              <SettingSubtitle
-                style={{
-                  marginTop: 5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
-                {t('settings.provider.api_key.label')}
-                {provider.id !== 'copilot' && (
-                  <Tooltip title={t('settings.provider.api.key.list.open')} mouseEnterDelay={0.5}>
-                    <Button type="text" onClick={openApiKeyList} icon={<Settings2 size={16} />} />
-                  </Tooltip>
-                )}
-              </SettingSubtitle>
-              <Space.Compact style={{ width: '100%', marginTop: 5 }}>
-                <Input.Password
-                  value={localApiKey}
-                  placeholder={t('settings.provider.api_key.label')}
-                  onChange={(e) => setLocalApiKey(e.target.value)}
-                  spellCheck={false}
-                  autoFocus={provider.enabled && provider.apiKey === '' && !isProviderSupportAuth(provider)}
-                  disabled={provider.id === 'copilot'}
-                  suffix={renderStatusIndicator()}
-                />
-                <Button
-                  type={isApiKeyConnectable ? 'primary' : 'default'}
-                  ghost={isApiKeyConnectable}
-                  onClick={onCheckApi}
-                  disabled={!apiHost || apiKeyConnectivity.checking}>
-                  {apiKeyConnectivity.checking ? (
-                    <LoadingIcon />
-                  ) : apiKeyConnectivity.status === 'success' ? (
-                    <Check size={16} className="lucide-custom" />
-                  ) : (
-                    t('settings.provider.check')
-                  )}
-                </Button>
-              </Space.Compact>
-              <SettingHelpTextRow style={{ justifyContent: 'space-between' }}>
-                <HStack>
-                  {apiKeyWebsite && !isDmxapi && (
-                    <SettingHelpLink target="_blank" href={apiKeyWebsite}>
-                      {t('settings.provider.get_api_key')}
-                    </SettingHelpLink>
-                  )}
-                </HStack>
-                <SettingHelpText>{t('settings.provider.api_key.tip')}</SettingHelpText>
-              </SettingHelpTextRow>
-            </>
-          )}
-          {!isDmxapi && (
-            <>
-              <SettingSubtitle style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div className="flex items-center gap-1">
-                  <Tooltip title={hostSelectorTooltip} mouseEnterDelay={0.3}>
-                    <div>
-                      <Selector
-                        size={14}
-                        value={activeHostField}
-                        onChange={(value) => setActiveHostField(value as HostField)}
-                        options={hostSelectorOptions}
-                        style={{ paddingLeft: 1, fontWeight: 'bold' }}
-                        placement="bottomLeft"
-                      />
-                    </div>
-                  </Tooltip>
-                  <HelpTooltip title={t('settings.provider.api.url.tip')}></HelpTooltip>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Button
-                    type="text"
-                    onClick={() => CustomHeaderPopup.show({ provider })}
-                    icon={<Settings2 size={16} />}
-                  />
-                </div>
-              </SettingSubtitle>
-              {activeHostField === 'apiHost' && (
-                <>
-                  {isCherryIN && isChineseUser ? (
-                    <CherryINSettings providerId={provider.id} apiHost={apiHost} setApiHost={setApiHost} />
-                  ) : (
-                    <Space.Compact style={{ width: '100%', marginTop: 5 }}>
-                      <Input
-                        value={apiHost}
-                        placeholder={t('settings.provider.api_host')}
-                        onChange={(e) => setApiHost(e.target.value)}
-                        onBlur={onUpdateApiHost}
-                      />
-                      {isApiHostResettable && (
-                        <Button danger onClick={onReset}>
-                          {t('settings.provider.api.url.reset')}
-                        </Button>
-                      )}
-                    </Space.Compact>
-                  )}
-                  {isVertexProvider(provider) && (
-                    <SettingHelpTextRow>
-                      <SettingHelpText>{t('settings.provider.vertex_ai.api_host_help')}</SettingHelpText>
-                    </SettingHelpTextRow>
-                  )}
-                  <SettingHelpTextRow style={{ justifyContent: 'space-between' }}>
-                    <SettingHelpText
-                      style={{
-                        marginLeft: 6,
-                        marginRight: '1em',
-                        whiteSpace: 'break-spaces',
-                        wordBreak: 'break-all'
-                      }}>
-                      {t('settings.provider.api_host_preview', { url: hostPreview() })}
-                    </SettingHelpText>
-                  </SettingHelpTextRow>
-                </>
-              )}
-
-              {activeHostField === 'anthropicApiHost' && canConfigureAnthropicHost && (
-                <>
-                  <Space.Compact style={{ width: '100%', marginTop: 5 }}>
-                    <Input
-                      value={anthropicApiHost ?? ''}
-                      placeholder={t('settings.provider.anthropic_api_host')}
-                      onChange={(e) => setAnthropicHost(e.target.value)}
-                      onBlur={onUpdateAnthropicHost}
-                    />
-                    {/* TODO: Add a reset button here. */}
-                  </Space.Compact>
-                  <SettingHelpTextRow style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                    <SettingHelpText style={{ marginLeft: 6, whiteSpace: 'break-spaces', wordBreak: 'break-all' }}>
-                      {t('settings.provider.anthropic_api_host_preview', {
-                        url: anthropicHostPreview || '—'
-                      })}
-                    </SettingHelpText>
-                  </SettingHelpTextRow>
-                </>
-              )}
-            </>
-          )}
-        </>
-      )}
-      {isAzureOpenAI && (
-        <>
-          <SettingSubtitle>{t('settings.provider.api_version')}</SettingSubtitle>
+          <SettingSubtitle
+            style={{
+              marginTop: 5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+            {t('settings.provider.api_key.label')}
+          </SettingSubtitle>
           <Space.Compact style={{ width: '100%', marginTop: 5 }}>
-            <Input
-              value={apiVersion}
-              placeholder="2024-xx-xx-preview"
-              onChange={(e) => setApiVersion(e.target.value)}
-              onBlur={onUpdateApiVersion}
+            <Input.Password
+              value={localApiKey}
+              placeholder={t('settings.provider.api_key.label')}
+              onChange={(e) => setLocalApiKey(e.target.value)}
+              spellCheck={false}
+              autoFocus={provider.enabled && provider.apiKey === '' && !isProviderSupportAuth(provider)}
+              suffix={renderStatusIndicator()}
             />
+            <Button
+              type={isApiKeyConnectable ? 'primary' : 'default'}
+              ghost={isApiKeyConnectable}
+              onClick={onCheckApi}
+              disabled={!apiHost || apiKeyConnectivity.checking}>
+              {apiKeyConnectivity.checking ? (
+                <LoadingIcon />
+              ) : apiKeyConnectivity.status === 'success' ? (
+                <Check size={16} className="lucide-custom" />
+              ) : (
+                t('settings.provider.check')
+              )}
+            </Button>
           </Space.Compact>
           <SettingHelpTextRow style={{ justifyContent: 'space-between' }}>
-            <SettingHelpText style={{ minWidth: 'fit-content' }}>
-              {t('settings.provider.azure.apiversion.tip')}
-            </SettingHelpText>
+            <HStack>
+              {apiKeyWebsite && (
+                <SettingHelpLink target="_blank" href={apiKeyWebsite}>
+                  {t('settings.provider.get_api_key')}
+                </SettingHelpLink>
+              )}
+            </HStack>
+            <SettingHelpText>{t('settings.provider.api_key.tip')}</SettingHelpText>
           </SettingHelpTextRow>
         </>
       )}
-      {provider.id === 'lmstudio' && <LMStudioSettings />}
-      {provider.id === 'gpustack' && <GPUStackSettings />}
-      {provider.id === 'copilot' && <GithubCopilotSettings providerId={provider.id} />}
-      {provider.id === 'aws-bedrock' && <AwsBedrockSettings />}
-      {provider.id === 'vertexai' && <VertexAISettings />}
-      <ModelList providerId={provider.id} />
     </SettingContainer>
   )
 }
 
 const ProviderName = styled.span`
-  font-size: 14px;
-  font-weight: 500;
-  margin-right: -2px;
+  font-size: 13px;
+  font-weight: 600;
 `
 
 export default ProviderSetting

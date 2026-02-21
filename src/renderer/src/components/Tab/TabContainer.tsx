@@ -4,19 +4,18 @@ import { Sortable, useDndReorder } from '@renderer/components/dnd'
 import HorizontalScrollContainer from '@renderer/components/HorizontalScrollContainer'
 import { isLinux, isMac } from '@renderer/config/constant'
 import { allMinApps } from '@renderer/config/minapps'
-import { useTheme } from '@renderer/context/ThemeProvider'
+
 import { useFullscreen } from '@renderer/hooks/useFullscreen'
 import { useMinappPopup } from '@renderer/hooks/useMinappPopup'
 import { useMinapps } from '@renderer/hooks/useMinapps'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { getThemeModeLabel, getTitleLabel } from '@renderer/i18n/label'
+import { getTitleLabel } from '@renderer/i18n/label'
 import UpdateAppButton from '@renderer/pages/home/components/UpdateAppButton'
 import tabsService from '@renderer/services/TabsService'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import type { Tab } from '@renderer/store/tabs'
 import { addTab, removeTab, setActiveTab, setTabs } from '@renderer/store/tabs'
 import type { MinAppType } from '@renderer/types'
-import { ThemeMode } from '@renderer/types'
 import { classNames } from '@renderer/utils'
 import { Tooltip } from 'antd'
 import type { LRUCache } from 'lru-cache'
@@ -24,15 +23,13 @@ import {
   FileSearch,
   Folder,
   Home,
+  Laptop,
   Languages,
   LayoutGrid,
-  Monitor,
-  Moon,
   NotepadText,
   Palette,
   Settings,
   Sparkle,
-  Sun,
   Terminal,
   X
 } from 'lucide-react'
@@ -89,6 +86,8 @@ const getTabIcon = (
   switch (tabId) {
     case 'home':
       return <Home size={14} />
+    case 'pc-monitor':
+      return <Laptop size={14} />
     case 'store':
       return <Sparkle size={14} />
     case 'translate':
@@ -124,7 +123,6 @@ const TabsContainer: React.FC<TabsContainerProps> = ({ children }) => {
   const tabs = useAppSelector((state) => state.tabs.tabs)
   const activeTabId = useAppSelector((state) => state.tabs.activeTabId)
   const isFullscreen = useFullscreen()
-  const { settedTheme, toggleTheme } = useTheme()
   const { hideMinappPopup, minAppsCache } = useMinappPopup()
   const { minapps } = useMinapps()
   const { useSystemTitleBar } = useSettings()
@@ -209,10 +207,7 @@ const TabsContainer: React.FC<TabsContainerProps> = ({ children }) => {
     navigate('/launchpad')
   }
 
-  const handleSettingsClick = () => {
-    hideMinappPopup()
-    navigate(lastSettingsPath)
-  }
+
 
   const handleTabClick = (tab: Tab) => {
     hideMinappPopup()
@@ -270,29 +265,19 @@ const TabsContainer: React.FC<TabsContainerProps> = ({ children }) => {
               </Tab>
             )}
           />
-          <AddTabButton onClick={handleAddTab} className={classNames({ active: activeTabId === 'launchpad' })}>
-            <PlusOutlined />
-          </AddTabButton>
         </HorizontalScrollContainer>
         <RightButtonsContainer style={{ paddingRight: isLinux && useSystemTitleBar ? '12px' : undefined }}>
           <UpdateAppButton />
-          <Tooltip
-            title={t('settings.theme.title') + ': ' + getThemeModeLabel(settedTheme)}
-            mouseEnterDelay={0.8}
-            placement="bottom">
-            <ThemeButton onClick={toggleTheme}>
-              {settedTheme === ThemeMode.dark ? (
-                <Moon size={16} />
-              ) : settedTheme === ThemeMode.light ? (
-                <Sun size={16} />
-              ) : (
-                <Monitor size={16} />
-              )}
-            </ThemeButton>
+          <Tooltip title={t('pc_monitor.title') || '电脑控制台'} mouseEnterDelay={0.8} placement="bottom">
+            <PCMonitorButton
+              onClick={() => {
+                hideMinappPopup()
+                navigate('/pc-monitor')
+              }}
+              $active={activeTabId === 'pc-monitor'}>
+              <Laptop size={16} />
+            </PCMonitorButton>
           </Tooltip>
-          <SettingsButton onClick={handleSettingsClick} $active={activeTabId === 'settings'}>
-            <Settings size={16} />
-          </SettingsButton>
         </RightButtonsContainer>
         <WindowControls />
       </TabsBar>
@@ -426,29 +411,14 @@ const RightButtonsContainer = styled.div`
   flex-shrink: 0;
 `
 
-const ThemeButton = styled.div`
+const PCMonitorButton = styled.div<{ $active: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 30px;
   height: 30px;
   cursor: pointer;
-  color: var(--color-text);
-
-  &:hover {
-    background: var(--color-list-item);
-    border-radius: 8px;
-  }
-`
-
-const SettingsButton = styled.div<{ $active: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  color: var(--color-text);
+  color: ${(props) => (props.$active ? 'var(--color-primary)' : 'var(--color-text)')};
   border-radius: 8px;
   background: ${(props) => (props.$active ? 'var(--color-list-item)' : 'transparent')};
   &:hover {

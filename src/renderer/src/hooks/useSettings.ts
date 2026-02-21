@@ -127,11 +127,9 @@ export function useSettings() {
 }
 
 export function useMessageStyle() {
-  const { messageStyle } = useSettings()
-  const isBubbleStyle = messageStyle === 'bubble'
-
+  // AIIRC: 强制使用 Gemini 风格气泡布局
   return {
-    isBubbleStyle
+    isBubbleStyle: true
   }
 }
 

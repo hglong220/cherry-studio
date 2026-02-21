@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 import ChatNavbar from './components/ChatNavBar'
+import ExploreStatusBar from './ExploreStatusBar'
 import AgentSessionInputbar from './Inputbar/AgentSessionInputbar'
 import { PinnedTodoPanel } from './Inputbar/components/PinnedTodoPanel'
 import Inputbar from './Inputbar/Inputbar'
@@ -177,7 +178,7 @@ const Chat: FC<Props> = (props) => {
   }, [t])
 
   return (
-    <Container id="chat" className={classNames([messageStyle, { 'multi-select-mode': isMultiSelectMode }])}>
+    <Container id="chat" className={classNames(['bubble', { 'multi-select-mode': isMultiSelectMode }])}>
       <HStack>
         <motion.div
           layout
@@ -198,6 +199,7 @@ const Chat: FC<Props> = (props) => {
                 setActiveAssistant={props.setActiveAssistant}
                 position="left"
               />
+              <ExploreStatusBar />
               <div
                 className="flex flex-1 flex-col justify-between"
                 style={{ height: `calc(${mainHeight} - var(--navbar-height))` }}>

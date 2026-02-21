@@ -5,6 +5,7 @@ import { CopyIcon, DeleteIcon, EditIcon } from '@renderer/components/Icons'
 import ObsidianExportPopup from '@renderer/components/Popups/ObsidianExportPopup'
 import PromptPopup from '@renderer/components/Popups/PromptPopup'
 import SaveToKnowledgePopup from '@renderer/components/Popups/SaveToKnowledgePopup'
+import SearchPopup from '@renderer/components/Popups/SearchPopup'
 import { isMac } from '@renderer/config/constant'
 import { db } from '@renderer/databases'
 import { useAssistant, useAssistants } from '@renderer/hooks/useAssistant'
@@ -42,15 +43,16 @@ import {
   CheckSquare,
   FolderOpen,
   HelpCircle,
-  ListChecks,
   MenuIcon,
   NotebookPen,
   PackagePlus,
   PinIcon,
   PinOffIcon,
   Save,
+  Search,
   Sparkles,
   Square,
+  SquarePen,
   UploadIcon,
   XIcon
 } from 'lucide-react'
@@ -59,7 +61,6 @@ import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import styled from 'styled-components'
 
-import AddButton from './AddButton'
 import { TopicManagePanel, useTopicManageMode } from './TopicManageMode'
 
 interface Props {
@@ -90,7 +91,7 @@ export const Topics: React.FC<Props> = ({ assistant: _assistant, activeTopic, se
 
   // 管理模式状态
   const manageState = useTopicManageMode()
-  const { isManageMode, selectedIds, searchText, enterManageMode, exitManageMode, toggleSelectTopic } = manageState
+  const { isManageMode, selectedIds, searchText, toggleSelectTopic } = manageState
 
   const { startEdit, isEditing, inputProps } = useInPlaceEdit({
     onSave: (name: string) => {
@@ -571,20 +572,22 @@ export const Topics: React.FC<Props> = ({ assistant: _assistant, activeTopic, se
         className="topics-tab"
         list={filteredTopics}
         onUpdate={updateTopics}
-        style={{ height: '100%', padding: '8px 0 10px 10px', paddingBottom: isManageMode ? 70 : 10 }}
-        itemContainerStyle={{ paddingBottom: '8px' }}
+        style={{ height: '100%', padding: '4px 0 10px 0', paddingBottom: isManageMode ? 70 : 10 }}
+        itemContainerStyle={{ paddingBottom: '0' }}
         header={
           <HeaderRow>
-            <AddButton onClick={() => EventEmitter.emit(EVENT_NAMES.ADD_NEW_TOPIC)}>
-              {t('chat.add.topic.title')}
-            </AddButton>
-            <Tooltip title={t('chat.topics.manage.title')} mouseEnterDelay={0.5}>
-              <HeaderIconButton
-                onClick={isManageMode ? exitManageMode : enterManageMode}
-                className={isManageMode ? 'active' : ''}>
-                <ListChecks size={14} />
-              </HeaderIconButton>
-            </Tooltip>
+            <GPTButton onClick={() => EventEmitter.emit(EVENT_NAMES.ADD_NEW_TOPIC)}>
+              <SquarePen size={16} />
+              <span>新聊天</span>
+            </GPTButton>
+            <GPTButton onClick={() => EventEmitter.emit(EVENT_NAMES.ADD_ASSISTANT)}>
+              <FolderOpen size={16} />
+              <span>新项目</span>
+            </GPTButton>
+            <GPTButton onClick={() => SearchPopup.show()}>
+              <Search size={16} />
+              <span>搜索聊天</span>
+            </GPTButton>
           </HeaderRow>
         }
         disabled={isManageMode}>
@@ -654,9 +657,9 @@ export const Topics: React.FC<Props> = ({ assistant: _assistant, activeTopic, se
                         isManageMode
                           ? undefined
                           : () => {
-                              setEditingTopicId(topic.id)
-                              startEdit(topic.name)
-                            }
+                            setEditingTopicId(topic.id)
+                            startEdit(topic.name)
+                          }
                       }>
                       {topicName}
                     </TopicName>
@@ -727,46 +730,53 @@ export const Topics: React.FC<Props> = ({ assistant: _assistant, activeTopic, se
 
 const TopicListItem = styled.div`
   padding: 7px 12px;
-  border-radius: var(--list-item-border-radius);
+  border-radius: 10px;
   font-size: 13px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
-  width: calc(var(--assistants-width) - 20px);
+  width: calc(100% - 16px);
+  margin-left: 8px;
+  margin-bottom: 1px;
+  position: relative;
+  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), color 0.2s;
 
   .menu {
     opacity: 0;
-    color: var(--color-text-3);
+    color: var(--text-muted);
   }
 
   &:hover {
-    background-color: var(--color-list-item-hover);
-    transition: background-color 0.1s;
+    background-color: var(--bg-hover);
 
     .menu {
       opacity: 1;
     }
   }
 
+  &:active {
+    transform: scale(0.98);
+    transition-duration: 60ms;
+  }
+
   &.active {
-    background-color: var(--color-list-item);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    background-color: var(--color-primary-mute);
     .menu {
       opacity: 1;
 
       &:hover {
-        color: var(--color-text-2);
+        color: var(--text-primary);
       }
     }
   }
+
   &.singlealone {
     &:hover {
-      background-color: var(--color-background-soft);
+      background-color: var(--bg-hover);
     }
     &.active {
-      background-color: var(--color-background-mute);
-      box-shadow: none;
+      background-color: var(--color-primary-mute);
     }
   }
 
@@ -794,6 +804,7 @@ const TopicName = styled.div`
   -webkit-box-orient: vertical;
   overflow: hidden;
   font-size: 13px;
+  letter-spacing: -0.006em;
   position: relative;
   will-change: background-position, width;
   flex: 1;
@@ -898,8 +909,13 @@ const MenuButton = styled.div`
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  min-width: 20px;
-  min-height: 20px;
+  min-width: 24px;
+  min-height: 24px;
+  border-radius: 6px;
+  transition: background-color 0.15s;
+  &:hover {
+    background-color: var(--bg-hover);
+  }
   .anticon {
     font-size: 12px;
   }
@@ -907,38 +923,36 @@ const MenuButton = styled.div`
 
 const HeaderRow = styled.div`
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-  padding-right: 10px;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0 8px;
   margin-bottom: 8px;
-  margin-top: 2px;
 `
 
-const HeaderIconButton = styled.div`
+const GPTButton = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
-  border-radius: var(--list-item-border-radius);
+  gap: 10px;
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.006em;
+  color: var(--text-secondary);
   cursor: pointer;
-  color: var(--color-text-2);
-  transition: all 0.2s;
-
+  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), color 0.2s;
+  -webkit-app-region: no-drag;
+  
   &:hover {
-    background-color: var(--color-background-mute);
-    color: var(--color-text-1);
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
   }
 
-  &.active {
-    color: var(--color-primary);
-
-    &:hover {
-      background-color: var(--color-background-mute);
-    }
+  &:active {
+    transform: scale(0.98);
+    transition-duration: 60ms;
   }
 `
 

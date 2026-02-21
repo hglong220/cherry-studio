@@ -468,13 +468,13 @@ export interface PpioPainting extends PaintingParams {
 
 export type PaintingAction = Partial<
   GeneratePainting &
-    RemixPainting &
-    EditPainting &
-    ScalePainting &
-    DmxapiPainting &
-    TokenFluxPainting &
-    OvmsPainting &
-    PpioPainting
+  RemixPainting &
+  EditPainting &
+  ScalePainting &
+  DmxapiPainting &
+  TokenFluxPainting &
+  OvmsPainting &
+  PpioPainting
 > &
   PaintingParams
 
@@ -647,6 +647,7 @@ export const isAutoDetectionMethod = (method: string): method is AutoDetectionMe
 
 export type SidebarIcon =
   | 'assistants'
+  | 'pc_monitor'
   | 'store'
   | 'paintings'
   | 'translate'
@@ -1057,7 +1058,7 @@ export interface MemoryListOptions extends MemoryEntity {
   offset?: number
 }
 
-export interface MemoryDeleteAllOptions extends MemoryEntity {}
+export interface MemoryDeleteAllOptions extends MemoryEntity { }
 
 export type EditorView = 'preview' | 'source' | 'read' // 实时,源码,预览
 // ========================================================================

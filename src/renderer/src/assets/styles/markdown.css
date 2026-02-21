@@ -1,8 +1,11 @@
+/* AIIRC: Apple HIG 风格排版 */
 .markdown {
   color: var(--color-text);
-  line-height: 1.6;
+  line-height: var(--apple-lh-body, 1.47);
   user-select: text;
   word-break: break-word;
+  font-size: var(--apple-body, 15px);
+  letter-spacing: var(--apple-ls-body, -0.006em);
 }
 
 .markdown h1:first-child,
@@ -20,44 +23,48 @@
 .markdown h4,
 .markdown h5,
 .markdown h6 {
-  margin: 1.5em 0 1em 0;
-  line-height: 1.3;
-  font-weight: bold;
+  margin: 1em 0 0.4em 0;
+  line-height: var(--apple-lh-title, 1.19);
+  font-weight: 600;
+  letter-spacing: var(--apple-ls-title, -0.022em);
 }
 
 .markdown h1 {
   margin-top: 0;
-  font-size: 2em;
-  border-bottom: 0.5px solid var(--color-border);
-  padding-bottom: 0.3em;
+  font-size: var(--apple-title-2, 22px);
+  font-weight: 700;
 }
 
 .markdown h2 {
-  font-size: 1.5em;
-  border-bottom: 0.5px solid var(--color-border);
-  padding-bottom: 0.3em;
+  font-size: var(--apple-title-3, 20px);
+  font-weight: 700;
 }
 
 .markdown h3 {
-  font-size: 1.2em;
+  font-size: var(--apple-headline, 17px);
+  font-weight: 600;
 }
 
 .markdown h4 {
-  font-size: 1em;
+  font-size: var(--apple-body, 15px);
+  font-weight: 600;
 }
 
 .markdown h5 {
-  font-size: 0.9em;
+  font-size: var(--apple-callout, 14px);
+  font-weight: 600;
 }
 
 .markdown h6 {
-  font-size: 0.8em;
+  font-size: var(--apple-subhead, 13px);
+  font-weight: 600;
+  color: var(--color-text-2);
 }
 
 .markdown p {
-  margin: 1.3em 0;
+  margin: 0.6em 0;
   white-space: pre-wrap;
-  line-height: 1.6;
+  line-height: var(--apple-lh-body, 1.47);
 }
 
 .markdown p:last-child {
@@ -82,12 +89,12 @@
 
 .markdown ul,
 .markdown ol {
-  padding-left: 1.5em;
-  margin: 1em 0;
+  padding-left: 1.4em;
+  margin: 0.5em 0;
 }
 
 .markdown li {
-  margin-bottom: 0.5em;
+  margin-bottom: 0.2em;
 }
 
 .markdown li pre {
@@ -98,8 +105,8 @@
   color: var(--color-text-3);
 }
 
-.markdown li > ul,
-.markdown li > ol {
+.markdown li>ul,
+.markdown li>ol {
   margin: 0.5em 0;
 }
 
@@ -143,7 +150,7 @@
   background-color: transparent;
 }
 
-.markdown pre:not(pre pre) > code:not(pre pre > code) {
+.markdown pre:not(pre pre)>code:not(pre pre > code) {
   padding: 15px;
   display: block;
 }
@@ -158,7 +165,7 @@
   border-radius: 0;
 }
 
-.markdown pre + pre {
+.markdown pre+pre {
   margin-top: 10px;
 }
 
@@ -258,7 +265,7 @@
   zoom: 0.8;
 }
 
-.markdown sup > span.link {
+.markdown sup>span.link {
   color: var(--color-reference-text);
 }
 
@@ -335,7 +342,7 @@ emoji-picker {
   --border-size: 0;
 }
 
-.block-wrapper + .block-wrapper {
+.block-wrapper+.block-wrapper {
   margin-top: 1em;
 }
 

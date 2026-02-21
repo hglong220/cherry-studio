@@ -48,6 +48,8 @@ import { debounce } from 'lodash'
 import type { FC } from 'react'
 import React, { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import styled from 'styled-components'
+import { ChevronDown } from 'lucide-react'
 
 import { InputbarCore } from './components/InputbarCore'
 import InputbarTools from './InputbarTools'
@@ -55,6 +57,8 @@ import KnowledgeBaseInput from './KnowledgeBaseInput'
 import MentionModelsInput from './MentionModelsInput'
 import { getInputbarConfig } from './registry'
 import TokenCount from './TokenCount'
+import { SelectModelPopup } from '@renderer/components/Popups/SelectModelPopup'
+import { isEmbeddingModel, isRerankModel } from '@renderer/config/models'
 
 const logger = loggerService.withContext('Inputbar')
 
@@ -90,12 +94,12 @@ interface InputbarInnerProps extends Props {
 
 const Inputbar: FC<Props> = ({ assistant: initialAssistant, setActiveTopic, topic }) => {
   const actionsRef = useRef<ProviderActionHandlers>({
-    resizeTextArea: () => {},
-    addNewTopic: () => {},
-    clearTopic: () => {},
-    onNewContext: () => {},
-    onTextChange: () => {},
-    toggleExpanded: () => {}
+    resizeTextArea: () => { },
+    addNewTopic: () => { },
+    clearTopic: () => { },
+    onNewContext: () => { },
+    onTextChange: () => { },
+    toggleExpanded: () => { }
   })
 
   const [initialMentionedModels] = useState(() => getValidatedCachedModels(initialAssistant.id))
@@ -226,11 +230,11 @@ const InputbarInner: FC<InputbarInnerProps> = ({ assistant: initialAssistant, se
   const placeholderText = enableQuickPanelTriggers
     ? t('chat.input.placeholder', { key: getSendMessageShortcutLabel(sendMessageShortcut) })
     : t('chat.input.placeholder_without_triggers', {
-        key: getSendMessageShortcutLabel(sendMessageShortcut),
-        defaultValue: t('chat.input.placeholder', {
-          key: getSendMessageShortcutLabel(sendMessageShortcut)
-        })
+      key: getSendMessageShortcutLabel(sendMessageShortcut),
+      defaultValue: t('chat.input.placeholder', {
+        key: getSendMessageShortcutLabel(sendMessageShortcut)
       })
+    })
 
   const sendMessage = useCallback(async () => {
     if (checkRateLimit(assistant)) {
@@ -480,17 +484,34 @@ const InputbarInner: FC<InputbarInnerProps> = ({ assistant: initialAssistant, se
   // leftToolbar: 左侧工具栏
   const leftToolbar = config.showTools ? <InputbarTools scope={scope} assistantId={assistant.id} /> : null
 
-  // rightToolbar: 右侧工具栏
+  // AIIRC: Gemini 风格的紧凑模型选择器
+  const handleSelectModel = useCallback(async () => {
+    const modelFilter = (m: Model) => !isEmbeddingModel(m) && !isRerankModel(m)
+    const selectedModel = await SelectModelPopup.show({ model, filter: modelFilter })
+    if (selectedModel) {
+      const enabledWebSearch = isWebSearchModel(selectedModel)
+      updateAssistant({
+        ...assistant,
+        model: selectedModel,
+        enableWebSearch: enabledWebSearch && assistant.enableWebSearch
+      })
+    }
+  }, [model, assistant, updateAssistant])
+
+  // 获取简短模型名 (如 "GPT-4.1" 而非 "GPT-4.1 | AIIRC")
+  const shortModelName = useMemo(() => {
+    if (!model?.name) return '选择模型'
+    // 取第一个空格或 | 之前的部分
+    const name = model.name.split('|')[0].trim()
+    return name.length > 12 ? name.substring(0, 12) + '…' : name
+  }, [model])
+
+  // rightToolbar: 右侧工具栏 - Gemini 风格模型选择器
   const rightToolbar = (
     <>
-      {tokenCountProps && (
-        <TokenCount
-          estimateTokenCount={tokenCountProps.estimateTokenCount}
-          inputTokenCount={tokenCountProps.inputTokenCount}
-          contextCount={tokenCountProps.contextCount}
-          onClick={onNewContext}
-        />
-      )}
+      <ModelSelectorChip onClick={handleSelectModel}>
+        {shortModelName} <ChevronDown size={14} />
+      </ModelSelectorChip>
     </>
   )
 
@@ -515,5 +536,29 @@ const InputbarInner: FC<InputbarInnerProps> = ({ assistant: initialAssistant, se
     />
   )
 }
+const ModelSelectorChip = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.006em;
+  color: var(--color-text-2);
+  cursor: pointer;
+  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1),
+              color 0.2s;
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+  &:hover {
+    background-color: var(--color-background-mute);
+    color: var(--color-text);
+  }
+  &:active {
+    transform: scale(0.96);
+    transition-duration: 60ms;
+  }
+`
 
 export default Inputbar

@@ -1,3 +1,4 @@
+@import './aiirc-design-system.css';
 @import './color.css';
 @import './font.css';
 @import './markdown.css';
@@ -7,11 +8,14 @@
 @import './animation.css';
 @import './richtext.css';
 @import './responsive.css';
+@import './apple-typography.css';
+@import './apple-polish.css';
 @import '../fonts/icon-fonts/iconfont.css';
 @import '../fonts/ubuntu/ubuntu.css';
 @import '../fonts/country-flag-fonts/flag.css';
 
 @layer base {
+
   *,
   *::before,
   *::after {
@@ -51,10 +55,12 @@ body {
   display: flex;
   min-height: 100vh;
   color: var(--color-text);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.47;
+  letter-spacing: -0.01em;
   overflow: hidden;
   font-family: var(--font-family);
+  font-weight: 400;
   text-rendering: optimizeLegibility;
   transition: background-color 0.3s linear;
   background-color: unset;
@@ -125,11 +131,11 @@ ul {
   display: flow-root;
 }
 
-.bubble:not(.multi-select-mode) .block-wrapper:last-child > *:last-child {
+.bubble:not(.multi-select-mode) .block-wrapper:last-child>*:last-child {
   margin-bottom: 0;
 }
 
-.bubble:not(.multi-select-mode) .message-content-container > *:last-child {
+.bubble:not(.multi-select-mode) .message-content-container>*:last-child {
   margin-bottom: 0;
 }
 

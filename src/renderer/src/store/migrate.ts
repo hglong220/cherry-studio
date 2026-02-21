@@ -693,7 +693,7 @@ const migrateConfig = {
   },
   '37': (state: RootState) => {
     try {
-      state.settings.messageStyle = 'plain'
+      state.settings.messageStyle = 'bubble' // AIIRC: Gemini 风格左右气泡布局
       return state
     } catch (error) {
       return state
